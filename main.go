@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -14,7 +15,7 @@ func main() {
 		log.Fatal(err)
 	}
 	reqPath := strings.TrimSuffix(u.Path, "/")
-	reqPath = strings.ReplaceAll(reqPath, "/", string(filepath.Separator))
+	reqPath = strings.ReplaceAll(reqPath, "/", string(os.PathSeparator))
 	osPath := filepath.Join("files", reqPath)
 	fmt.Println(osPath)
 }
