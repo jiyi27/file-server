@@ -1,9 +1,11 @@
 package main
 
 import (
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -25,19 +27,24 @@ func (s *server) route(w http.ResponseWriter, r *http.Request) {
 		err, status := s.handleUpload(w, r, osPath)
 		if err != nil {
 			_ = handleStatus(w, r, status)
+			log.Println(err)
 		}
 		w.WriteHeader(status)
 	case info.IsDir():
 		err := s.handleDir(w, r, osPath)
 		if err != nil {
 			_ = handleStatus(w, r, http.StatusInternalServerError)
+			log.Println(err)
 		}
 	case !info.IsDir() && r.Method == http.MethodDelete:
 		err := os.Remove(osPath)
 		if err != nil {
 			_ = handleStatus(w, r, http.StatusInternalServerError)
+			log.Println(err)
 		}
 	default:
+		w.Header().Set("Content-Disposition", "attachment; filename="+strconv.Quote(info.Name()))
+		w.Header().Set("Content-Type", "application/octet-stream")
 		http.ServeFile(w, r, osPath)
 	}
 }

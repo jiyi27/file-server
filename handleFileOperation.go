@@ -31,12 +31,6 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request, osPath str
 	}
 	defer parsedFile.Close()
 
-	// create root folder if it doesn't exist.
-	err = os.MkdirAll(s.root, os.ModePerm)
-	if err != nil {
-		return err, http.StatusInternalServerError
-	}
-
 	dstPath := filepath.Join(osPath, filepath.Base(parsedFileHeader.Filename))
 	var dst *os.File
 	_, err = os.Stat(dstPath)
@@ -82,6 +76,9 @@ func (s *server) handleDir(w http.ResponseWriter, r *http.Request, osPath string
 	sort.Slice(files, func(i, j int) bool { return files[i].Name() < files[j].Name() })
 
 	data := s.getTemplateData(r, files)
-	tmpl, err := template.ParseFiles(templateFilePath)
+	tmpl, err := template.ParseFiles(s.rootAssetsPath + string(os.PathSeparator) + "index.html")
+	if err != nil {
+		return err
+	}
 	return tmpl.Execute(w, data)
 }

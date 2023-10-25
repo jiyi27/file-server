@@ -1,21 +1,17 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"net/url"
-	"os"
-	"path/filepath"
-	"strings"
+	"net/http"
 )
 
 func main() {
-	u, err := url.Parse("https://example.com/foobar/a.txt?download")
-	if err != nil {
-		log.Fatal(err)
+	srv := server{
+		root:           "root",
+		rootAssetsPath: "template",
+		maxFileSize:    1 << 25,
 	}
-	reqPath := strings.TrimSuffix(u.Path, "/")
-	reqPath = strings.ReplaceAll(reqPath, "/", string(os.PathSeparator))
-	osPath := filepath.Join("files", reqPath)
-	fmt.Println(osPath)
+	if err := http.ListenAndServe(":8080", &srv); err != nil {
+		log.Fatal("ListenAndServe: ", err)
+	}
 }

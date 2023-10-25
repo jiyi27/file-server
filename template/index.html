@@ -2,9 +2,20 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{{.Path}}</title>
+    <title>{{.CurrentPath}}</title>
+    <link rel="shortcut icon" type="image/x-icon" href="{{.RootAssetsPath}}?asset=favicon.ico"/>
 </head>
 <body>
-
+<ul>
+    {{range .Files}}
+    <li>
+        <a href="{{.Url}}">
+            <span class="field name" translate="no">{{.DisplayName}}</span>
+            <span class="field size">{{.DisplaySize}}</span>
+            <span class="field time">{{.DisplayTime}}</span>
+        </a>
+    </li>
+    {{end}}
+</ul>
 </body>
 </html>
