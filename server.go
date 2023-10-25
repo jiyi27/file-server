@@ -13,7 +13,7 @@ type server struct {
 }
 
 func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// asset
+	// handle asset
 	const assetPrefix = "asset="
 	if strings.HasPrefix(r.URL.RawQuery, assetPrefix) {
 		assetName := r.URL.RawQuery[len(assetPrefix):]
@@ -21,6 +21,7 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// task delegation
 	s.route(w, r)
 }
 

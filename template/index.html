@@ -6,6 +6,24 @@
     <link rel="shortcut icon" type="image/x-icon" href="{{.RootAssetsPath}}?asset=favicon.ico"/>
 </head>
 <body>
+
+<div class="panel upload">
+<form method="POST" action="{{.CurrentPath}}?upload" enctype="multipart/form-data">
+    <input required name="file" type="file"/>
+    <input type="submit" value="Upload"/>
+</form>
+</div>
+
+<div class="panel mkdir">
+    <form method="POST" action="{{.CurrentPath}}?mkdir" enctype="application/x-www-form-urlencoded">
+        <label>
+            Folder name:
+            <input type="text" autocomplete="off" name="folder_name" required/>
+        </label>
+        <input type="submit" value="Create"/>
+    </form>
+</div>
+
 <ul>
     {{range .Files}}
     <li>
@@ -17,5 +35,7 @@
     </li>
     {{end}}
 </ul>
+
+
 </body>
 </html>

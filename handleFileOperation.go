@@ -14,7 +14,32 @@ import (
 	"time"
 )
 
-func (s *server) handleUpload(w http.ResponseWriter, r *http.Request, osPath string) (error, int) {
+func (s *server) handleMkdir(w http.ResponseWriter, r *http.Request, currentPath string) (error, int) {
+	// Parse form.
+	if err := r.ParseForm(); err != nil {
+		err = fmt.Errorf("failed to parse folder name: %v", err)
+		return err, http.StatusBadRequest
+	}
+
+	// Get username and password form the parsed form.
+	folderName := r.Form.Get("folder_name")
+	flPath := filepath.Join(currentPath, folderName)
+	err := os.Mkdir(flPath, 0750)
+
+	if err != nil {
+		err = fmt.Errorf("failed to create folder: %v", err)
+		return err, http.StatusBadRequest
+	}
+
+	// redirect
+	r.URL.RawQuery = ""
+	w.Header().Set("Location", r.URL.String())
+	w.WriteHeader(http.StatusSeeOther)
+
+	return nil, http.StatusOK
+}
+
+func (s *server) handleUpload(w http.ResponseWriter, r *http.Request, currentPath string) (error, int) {
 	// parse form from request body.
 	r.Body = http.MaxBytesReader(w, r.Body, s.maxFileSize)
 	if err := r.ParseMultipartForm(s.maxFileSize); err != nil {
@@ -31,7 +56,7 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request, osPath str
 	}
 	defer parsedFile.Close()
 
-	dstPath := filepath.Join(osPath, filepath.Base(parsedFileHeader.Filename))
+	dstPath := filepath.Join(currentPath, filepath.Base(parsedFileHeader.Filename))
 	var dst *os.File
 	_, err = os.Stat(dstPath)
 	// the name of parsed file already exists, create a dst file with a new name.
@@ -59,7 +84,10 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request, osPath str
 		return fmt.Errorf("failed to close dst fileHtml: %v", err), http.StatusInternalServerError
 	}
 
+	// redirect
+	r.URL.RawQuery = ""
 	w.Header().Set("Location", r.URL.String())
+	w.WriteHeader(http.StatusSeeOther)
 	return nil, http.StatusSeeOther
 }
 
