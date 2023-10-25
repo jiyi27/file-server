@@ -101,7 +101,17 @@ func (s *server) handleDir(w http.ResponseWriter, r *http.Request, osPath string
 	if err != nil {
 		return err
 	}
-	sort.Slice(files, func(i, j int) bool { return files[i].Name() < files[j].Name() })
+
+	sort.Slice(files, func(i, j int) bool {
+		if files[i].IsDir() && !files[j].IsDir() {
+			return true // Directory should appear before the file
+		} else if !files[i].IsDir() && files[j].IsDir() {
+			return false // File should appear after the directory
+		} else {
+			// Both files[i] and files[j] are either directories or files
+			return files[i].ModTime().After(files[j].ModTime())
+		}
+	})
 
 	data := s.getTemplateData(r, files)
 	tmpl, err := template.ParseFiles(s.rootAssetsPath + string(os.PathSeparator) + "index.html")
