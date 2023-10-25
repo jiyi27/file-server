@@ -5,6 +5,8 @@ import (
 	"html/template"
 	"net/http"
 	"os"
+	"path"
+	"strings"
 )
 
 type file struct {
@@ -16,14 +18,24 @@ type file struct {
 }
 
 type templateData struct {
+	IsRoot         bool
 	CurrentPath    string
+	ParentDirPath  string
 	RootAssetsPath string
 	Files          []file
 }
 
 func (s *server) getTemplateData(r *http.Request, files []os.FileInfo) templateData {
+	r.URL.Path = strings.TrimSuffix(r.URL.Path, "/")
+	parentDirPath := r.URL.Path
+	if !(r.URL.Path == "") {
+		parentDirPath = path.Dir(r.URL.Path)
+	}
+
 	data := templateData{
+		IsRoot:         r.URL.Path == "",
 		CurrentPath:    r.URL.Path,
+		ParentDirPath:  parentDirPath,
 		RootAssetsPath: s.rootAssetsPath,
 		Files:          make([]file, 0),
 	}

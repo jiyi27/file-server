@@ -25,6 +25,11 @@
         <th style="width: 10%">size</th>
         <th style="width: 30%">time</th>
     </tr>
+    <tr>
+        <td><a href="{{.ParentDirPath}}">{{if .IsRoot}}./{{else}}../{{end}}</a></td>
+        <td></td>
+        <td></td>
+    </tr>
     {{range .Files}}
     <tr>
         <td><a href="{{.Url}}">{{.DisplayName}}</a></td>

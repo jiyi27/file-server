@@ -102,13 +102,13 @@ func (s *server) handleDir(w http.ResponseWriter, r *http.Request, osPath string
 		return err
 	}
 
+	// make directory appear before the file
 	sort.Slice(files, func(i, j int) bool {
 		if files[i].IsDir() && !files[j].IsDir() {
-			return true // Directory should appear before the file
+			return true
 		} else if !files[i].IsDir() && files[j].IsDir() {
-			return false // File should appear after the directory
+			return false
 		} else {
-			// Both files[i] and files[j] are either directories or files
 			return files[i].ModTime().After(files[j].ModTime())
 		}
 	})
