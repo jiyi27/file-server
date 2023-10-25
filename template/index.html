@@ -1,17 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>{{.CurrentPath}}</title>
-    <link rel="shortcut icon" type="image/x-icon" href="{{.RootAssetsPath}}?asset=favicon.ico"/>
-</head>
 <body>
 
 <div class="panel upload">
-<form method="POST" action="{{.CurrentPath}}?upload" enctype="multipart/form-data">
-    <input required name="file" type="file"/>
-    <input type="submit" value="Upload"/>
-</form>
+    <form method="POST" action="{{.CurrentPath}}?upload" enctype="multipart/form-data">
+        <input required name="file" type="file"/>
+        <input type="submit" value="Upload"/>
+    </form>
 </div>
 
 <div class="panel mkdir">
@@ -24,18 +19,26 @@
     </form>
 </div>
 
-<ul>
+<table class="item-list">
+    <tr>
+        <th>file</th>
+        <th>size</th>
+        <th>time</th>
+    </tr>
     {{range .Files}}
-    <li>
-        <a href="{{.Url}}">
-            <span class="field name" translate="no">{{.DisplayName}}</span>
-            <span class="field size">{{.DisplaySize}}</span>
-            <span class="field time">{{.DisplayTime}}</span>
-        </a>
-    </li>
+    <tr>
+        <td><a href="{{.Url}}">{{.DisplayName}}</a></td>
+        <td>{{.DisplaySize}}</td>
+        <td>{{.DisplayTime}}</td>
+    </tr>
     {{end}}
-</ul>
-
+</table>
 
 </body>
+<head>
+    <meta charset="UTF-8">
+    <title>{{.CurrentPath}}</title>
+    <link rel="shortcut icon" type="image/x-icon" href="{{.RootAssetsPath}}?asset=favicon.ico"/>
+    <link rel="stylesheet" type="text/css" href="{{.RootAssetsPath}}?asset=index.css"/>
+</head>
 </html>

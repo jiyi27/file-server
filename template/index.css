@@ -1,0 +1,22 @@
+.item-list {
+    margin: 1em;
+    table-layout: fixed;
+    width: 90%;
+    border-collapse: collapse;
+}
+
+.item-list tr {
+    text-align: left;
+    border-bottom: 0.1em solid #f5f5f5;
+}
+
+.item-list tr:hover {
+    background: #f5f5f5;
+}
+
+th, td {
+    padding: 0.3em;
+}
+
+
+
