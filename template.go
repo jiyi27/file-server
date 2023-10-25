@@ -11,7 +11,7 @@ import (
 
 type file struct {
 	Url         string
-	DeleteUrl   string
+	IsDir       bool
 	DisplayName template.HTML
 	DisplaySize template.HTML
 	DisplayTime template.HTML
@@ -53,7 +53,7 @@ func (s *server) getTemplateData(r *http.Request, files []os.FileInfo) templateD
 
 		data.Files = append(data.Files, file{
 			Url:         _url,
-			DeleteUrl:   "",
+			IsDir:       item.IsDir(),
 			DisplayName: template.HTML(name),
 			DisplaySize: template.HTML(size),
 			DisplayTime: template.HTML(item.ModTime().Format("02-01-2006")),

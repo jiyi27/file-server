@@ -39,16 +39,9 @@ func (s *server) route(w http.ResponseWriter, r *http.Request) {
 			_ = handleStatus(w, r, http.StatusInternalServerError)
 			log.Println(err)
 		}
-	case strings.HasPrefix(rawQuery, "download"):
-
-	case info.IsDir():
-		err := s.handleDir(w, r, currentPath)
-		if err != nil {
-			_ = handleStatus(w, r, http.StatusInternalServerError)
-			log.Println(err)
-		}
-	case !info.IsDir() && r.Method == http.MethodDelete:
-		err := os.Remove(currentPath)
+	// no directory below, all file.
+	case strings.HasPrefix(rawQuery, "delete"):
+		err := s.handleDelete(w, r, currentPath)
 		if err != nil {
 			_ = handleStatus(w, r, http.StatusInternalServerError)
 			log.Println(err)

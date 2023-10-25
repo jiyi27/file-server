@@ -1,11 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{.CurrentPath}}</title>
+    <link rel="shortcut icon" type="image/x-icon" href="{{.RootAssetsPath}}?asset=favicon.ico"/>
+    <link rel="stylesheet" type="text/css" href="{{.RootAssetsPath}}?asset=index.css"/>
+</head>
 <body>
 
 <div class="panel upload">
     <form method="POST" action="{{.CurrentPath}}?upload" enctype="multipart/form-data">
         <input required name="file" type="file"/>
-        <input type="submit" value="Upload"/>
+        <button type="submit">upload</button>
     </form>
 </div>
 
@@ -15,7 +21,7 @@
             Folder name:
             <input type="text" autocomplete="off" name="folder_name" required/>
         </label>
-        <input type="submit" value="Create"/>
+        <button type="submit">create</button>
     </form>
 </div>
 
@@ -23,27 +29,34 @@
     <tr>
         <th style="width: 50%">file</th>
         <th style="width: 10%">size</th>
-        <th style="width: 30%">time</th>
+        <th style="width: 20%">time</th>
+        <th style="width: 10%"></th>
     </tr>
     <tr>
-        <td><a href="{{.ParentDirPath}}">{{if .IsRoot}}./{{else}}../{{end}}</a></td>
-        <td></td>
-        <td></td>
+        <td style="font-size: 1.2em; font-weight: bold;"><a href="{{.ParentDirPath}}">{{if .IsRoot}}. /{{else}}. . /{{end}}</a></td>
     </tr>
     {{range .Files}}
     <tr>
         <td><a href="{{.Url}}">{{.DisplayName}}</a></td>
         <td>{{.DisplaySize}}</td>
-        <td>{{.DisplayTime}}</td>
+        <td style="color: #999;">{{.DisplayTime}}</td>
+        <td>
+            {{if not .IsDir}}
+            <form method="POST" action="{{.Url}}?delete" onsubmit="return confirmDelete('{{.DisplayName}}')">
+                <button type="submit" style="color: blueviolet">delete</button>
+            </form>
+            {{end}}
+        </td>
+
     </tr>
     {{end}}
 </table>
 
 </body>
-<head>
-    <meta charset="UTF-8">
-    <title>{{.CurrentPath}}</title>
-    <link rel="shortcut icon" type="image/x-icon" href="{{.RootAssetsPath}}?asset=favicon.ico"/>
-    <link rel="stylesheet" type="text/css" href="{{.RootAssetsPath}}?asset=index.css"/>
-</head>
+
+<script>
+    function confirmDelete(name) {
+        return confirm('Confirm delete file\n' + name);
+    }
+</script>
 </html>

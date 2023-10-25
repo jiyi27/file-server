@@ -7,12 +7,31 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 )
+
+func (s *server) handleDelete(w http.ResponseWriter, r *http.Request, currentPath string) error {
+	err := os.Remove(currentPath)
+	if err != nil {
+		return fmt.Errorf("faild to delete file:%v", err)
+	}
+
+	// clean url and redirect.
+	// go back to the parent dir after delete file.
+	r.URL.Path = strings.TrimSuffix(r.URL.Path, "/")
+	r.URL.Path = path.Dir(r.URL.Path)
+	r.URL.RawQuery = ""
+
+	w.Header().Set("Location", r.URL.String())
+	w.WriteHeader(http.StatusSeeOther)
+
+	return nil
+}
 
 func (s *server) handleMkdir(w http.ResponseWriter, r *http.Request, currentPath string) (error, int) {
 	// Parse form.
@@ -31,7 +50,7 @@ func (s *server) handleMkdir(w http.ResponseWriter, r *http.Request, currentPath
 		return err, http.StatusBadRequest
 	}
 
-	// redirect
+	// clean url and redirect
 	r.URL.RawQuery = ""
 	w.Header().Set("Location", r.URL.String())
 	w.WriteHeader(http.StatusSeeOther)
@@ -84,7 +103,7 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request, currentPat
 		return fmt.Errorf("failed to close dst fileHtml: %v", err), http.StatusInternalServerError
 	}
 
-	// redirect
+	// clean url and redirect
 	r.URL.RawQuery = ""
 	w.Header().Set("Location", r.URL.String())
 	w.WriteHeader(http.StatusSeeOther)
