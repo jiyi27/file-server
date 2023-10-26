@@ -5,24 +5,48 @@
     <title>{{.CurrentPath}}</title>
     <link rel="shortcut icon" type="image/x-icon" href="{{.RootAssetsPath}}?asset=favicon.ico"/>
     <link rel="stylesheet" type="text/css" href="{{.RootAssetsPath}}?asset=index.css"/>
+    <script>
+        function showDialog(dialogId) {
+            const dialog = document.getElementById(dialogId + "-dialog");
+            dialog.style.display = "block";
+        }
+
+        function closeDialog(dialogId) {
+            const dialog = document.getElementById(dialogId + "-dialog");
+            dialog.style.display = "none";
+        }
+
+        function confirmDelete(name) {
+            return confirm('Confirm delete file\n' + name);
+        }
+    </script>
 </head>
 <body>
+<ul class="menu">
+    <li><a href="#" onclick="showDialog('upload')">Upload File</a></li>
+    <li><a href="#" onclick="showDialog('mkdir')" style="margin-left: 1.5em;">Create Folder</a></li>
+</ul>
 
-<div class="panel upload">
-    <form method="POST" action="{{.CurrentPath}}?upload" enctype="multipart/form-data">
-        <input required name="file" type="file"/>
-        <button type="submit">upload</button>
-    </form>
+<div id="upload-dialog" class="dialog-overlay">
+    <div class="dialog">
+        <a href="#" class="close" onclick="closeDialog('upload')">&times;</a>
+        <h2>Upload File</h2>
+        <form method="POST" action="{{.CurrentPath}}?upload" enctype="multipart/form-data">
+            <input required name="file" type="file"/>
+            <button type="submit">upload</button>
+        </form>
+    </div>
 </div>
 
-<div class="panel mkdir">
-    <form method="POST" action="{{.CurrentPath}}?mkdir" enctype="application/x-www-form-urlencoded">
-        <label>
-            Folder name:
-            <input type="text" autocomplete="off" name="folder_name" required/>
-        </label>
-        <button type="submit">create</button>
-    </form>
+<div id="mkdir-dialog" class="dialog-overlay">
+    <div class="dialog">
+        <a href="#" class="close" onclick="closeDialog('mkdir')">&times;</a>
+        <h2>Create Folder</h2>
+        <form method="POST" action="{{.CurrentPath}}?mkdir" enctype="application/x-www-form-urlencoded">
+            <input type="text" autocomplete="off" name="folder_name" placeholder="Folder Name" required/>
+            <button type="submit">create</button>
+        </form>
+    </div>
 </div>
 
 <table class="item-list">
@@ -47,16 +71,9 @@
             </form>
             {{end}}
         </td>
-
     </tr>
     {{end}}
 </table>
 
 </body>
-
-<script>
-    function confirmDelete(name) {
-        return confirm('Confirm delete file\n' + name);
-    }
-</script>
 </html>
