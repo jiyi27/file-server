@@ -49,7 +49,7 @@ func (s *server) getTemplateData(r *http.Request, files []os.FileInfo) templateD
 			name += string(os.PathSeparator)
 			size = ""
 		}
-		_url := r.URL.Path + name
+		_url := r.URL.Path + string(os.PathSeparator) + name
 
 		data.Files = append(data.Files, file{
 			Url:         _url,
