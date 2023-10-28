@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 	"os"
 	"path"
@@ -11,7 +12,7 @@ import (
 
 type file struct {
 	Url         string
-	IsDir       bool
+	CanDelete   bool
 	DisplayName template.HTML
 	DisplaySize template.HTML
 	DisplayTime template.HTML
@@ -19,42 +20,54 @@ type file struct {
 
 type templateData struct {
 	IsRoot         bool
-	CurrentPath    string
+	PWD            string // Current path
 	ParentDirPath  string
 	RootAssetsPath string
 	Files          []file
 }
 
 func (s *server) getTemplateData(r *http.Request, files []os.FileInfo) templateData {
-	r.URL.Path = strings.TrimSuffix(r.URL.Path, "/")
-	parentDirPath := r.URL.Path
-	if !(r.URL.Path == "") {
-		parentDirPath = path.Dir(r.URL.Path)
+	pwd := strings.TrimSuffix(r.URL.Path, "/")
+	parentDirPath := pwd
+	if !(pwd == "") {
+		parentDirPath = path.Dir(pwd)
 	}
 
 	data := templateData{
-		IsRoot:         r.URL.Path == "",
-		CurrentPath:    r.URL.Path,
+		IsRoot:         pwd == "",
+		PWD:            pwd,
 		ParentDirPath:  parentDirPath,
 		RootAssetsPath: s.rootAssetsPath,
 		Files:          make([]file, 0),
 	}
 
 	for _, item := range files {
-		name := item.Name()
+		filename := item.Name()
 		size := fileSizeBytes(item.Size()).String()
-		// dir has path separator at the end: path/to/dir/
-		// file doesn't have separator: path/to/file
+		filePath := pwd + string(os.PathSeparator) + filename
+		canDelete := true
+
 		if item.IsDir() {
-			name += string(os.PathSeparator)
+			// the full path of dir has a separator "/" at the end: path/to/dir/
+			filename += string(os.PathSeparator)
+			filePath = pwd + string(os.PathSeparator) + filename
 			size = ""
+
+			// only empty dir can be deleted.
+			empty, err := s.isEmpty(filePath)
+			if err != nil {
+				log.Printf("failed to check if file %v is emtpy: %v", filePath, err)
+				continue
+			}
+			if !empty {
+				canDelete = false
+			}
 		}
-		_url := r.URL.Path + string(os.PathSeparator) + name
 
 		data.Files = append(data.Files, file{
-			Url:         _url,
-			IsDir:       item.IsDir(),
-			DisplayName: template.HTML(name),
+			Url:         filePath,
+			CanDelete:   canDelete,
+			DisplayName: template.HTML(filename),
 			DisplaySize: template.HTML(size),
 			DisplayTime: template.HTML(item.ModTime().Format("02-01-2006")),
 		})

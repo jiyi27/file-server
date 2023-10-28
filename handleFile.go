@@ -15,8 +15,9 @@ import (
 	"time"
 )
 
-func (s *server) handleDelete(w http.ResponseWriter, r *http.Request, currentPath string) error {
-	err := os.Remove(currentPath)
+func (s *server) handleDelete(w http.ResponseWriter, r *http.Request, filePath string) error {
+	// remove removes the named file or (empty) directory.
+	err := os.Remove(filePath)
 	if err != nil {
 		return fmt.Errorf("faild to delete file:%v", err)
 	}
@@ -59,8 +60,9 @@ func (s *server) handleMkdir(w http.ResponseWriter, r *http.Request, currentPath
 }
 
 func (s *server) handleUpload(w http.ResponseWriter, r *http.Request, currentPath string) (error, int) {
-	// parse form from request body.
+	// limit the size of incoming request bodies.
 	r.Body = http.MaxBytesReader(w, r.Body, s.maxFileSize)
+	// parse form from request body.
 	if err := r.ParseMultipartForm(s.maxFileSize); err != nil {
 		return fmt.Errorf("file is too large:%v", err), http.StatusBadRequest
 	}
@@ -138,4 +140,21 @@ func (s *server) handleDir(w http.ResponseWriter, r *http.Request, osPath string
 		return err
 	}
 	return tmpl.Execute(w, data)
+}
+
+func (s *server) isEmpty(filePath string) (bool, error) {
+	fileFullPath := path.Join(s.root, filePath)
+	f, err := os.Open(fileFullPath)
+	if err != nil {
+		return false, err
+	}
+	defer f.Close()
+
+	_, err = f.Readdirnames(1) // Or f.Readdir(1)
+	if err == io.EOF {
+		return true, nil
+	}
+
+	// either not empty or error
+	return false, err
 }

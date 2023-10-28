@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{{.CurrentPath}}</title>
+    <title>{{.PWD}}</title>
     <link rel="shortcut icon" type="image/x-icon" href="{{.RootAssetsPath}}?asset=favicon.ico"/>
     <link rel="stylesheet" type="text/css" href="{{.RootAssetsPath}}?asset=index.css"/>
     <script>
@@ -31,7 +31,7 @@
     <div class="dialog">
         <a href="#" class="close" onclick="closeDialog('upload')">&times;</a>
         <h2>Upload File</h2>
-        <form method="POST" action="{{.CurrentPath}}?upload" enctype="multipart/form-data">
+        <form method="POST" action="{{.PWD}}?upload" enctype="multipart/form-data">
             <input required name="file" type="file"/>
             <button type="submit">upload</button>
         </form>
@@ -42,7 +42,7 @@
     <div class="dialog">
         <a href="#" class="close" onclick="closeDialog('mkdir')">&times;</a>
         <h2>Create Folder</h2>
-        <form method="POST" action="{{.CurrentPath}}?mkdir" enctype="application/x-www-form-urlencoded">
+        <form method="POST" action="{{.PWD}}?mkdir" enctype="application/x-www-form-urlencoded">
             <input type="text" autocomplete="off" name="folder_name" placeholder="Folder Name" required/>
             <button type="submit">create</button>
         </form>
@@ -65,7 +65,7 @@
         <td>{{.DisplaySize}}</td>
         <td style="color: #999;">{{.DisplayTime}}</td>
         <td>
-            {{if not .IsDir}}
+            {{if .CanDelete}}
             <form method="POST" action="{{.Url}}?delete" onsubmit="return confirmDelete('{{.DisplayName}}')">
                 <button type="submit" style="color: blueviolet">delete</button>
             </form>
