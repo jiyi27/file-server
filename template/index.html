@@ -55,6 +55,7 @@
         <th style="width: 10%">size</th>
         <th style="width: 20%">time</th>
         <th style="width: 10%"></th>
+        <th style="width: 10%"></th>
     </tr>
     <tr>
         <td style="font-size: 1.2em; font-weight: bold;"><a href="{{.ParentDirPath}}">{{if .IsRoot}}. /{{else}}. . /{{end}}</a></td>
@@ -71,9 +72,28 @@
             </form>
             {{end}}
         </td>
+        <td>
+            {{if .SharedUrl}}
+            <p id="url-text" style="display: none">{{.SharedUrl}}</p>
+            <button onclick="copyText()">share</button>
+            {{end}}
+        </td>
     </tr>
     {{end}}
 </table>
+
+<script>
+    function copyText() {
+        const copyText = document.getElementById("url-text");
+        navigator.clipboard.writeText(copyText.textContent)
+            .then(() => {
+                alert("successfully copied");
+            })
+            .catch(() => {
+                alert("something went wrong");
+            });
+    }
+</script>
 
 </body>
 </html>

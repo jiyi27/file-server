@@ -10,9 +10,11 @@ import (
 )
 
 type server struct {
+	domain         string
 	root           string
 	rootAssetsPath string
 	maxFileSize    int64
+	sharedFiles    map[string]string
 	auth           struct {
 		username string
 		password string
@@ -25,6 +27,14 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if strings.HasPrefix(r.URL.RawQuery, assetPrefix) {
 		assetName := r.URL.RawQuery[len(assetPrefix):]
 		s.asset(w, r, assetName)
+		return
+	}
+
+	// handle shared file
+	const sharedPrefix = "shared_id"
+	if strings.HasPrefix(r.URL.RawQuery, sharedPrefix) {
+		fileID := r.URL.RawQuery[len(sharedPrefix):]
+		s.handleSharedDownload(w, r, fileID)
 		return
 	}
 
@@ -60,7 +70,6 @@ func (s *server) notifyAuth(w http.ResponseWriter) {
 }
 
 func (s *server) handleError(w http.ResponseWriter, _ *http.Request, status int, msg string) {
-	w.WriteHeader(status)
-	msg = fmt.Sprintf("%v:%v", http.StatusText(status), msg)
+	msg = fmt.Sprintf("%v: %v", http.StatusText(status), msg)
 	http.Error(w, msg, status)
 }

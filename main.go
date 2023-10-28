@@ -10,9 +10,11 @@ import (
 // AUTH_USERNAME=admin AUTH_PASSWORD=778899 PORT=8080 go run .
 func main() {
 	srv := server{
+		domain:         "http://localhost:8080",
 		root:           "root",
 		rootAssetsPath: "template",
 		maxFileSize:    1 << 25, // 32MB
+		sharedFiles:    make(map[string]string),
 	}
 	srv.auth.username = os.Getenv("AUTH_USERNAME")
 	srv.auth.password = os.Getenv("AUTH_PASSWORD")

@@ -15,23 +15,34 @@ import (
 	"time"
 )
 
-func (s *server) handleDelete(w http.ResponseWriter, r *http.Request, filePath string) error {
-	// remove removes the named file or (empty) directory.
-	err := os.Remove(filePath)
+func (s *server) handleDir(w http.ResponseWriter, r *http.Request, filePath string) error {
+	d, err := os.Open(filePath)
 	if err != nil {
-		return fmt.Errorf("faild to delete file:%v", err)
+		return err
 	}
 
-	// clean url and redirect.
-	// go back to the parent dir after delete file.
-	r.URL.Path = strings.TrimSuffix(r.URL.Path, "/")
-	r.URL.Path = path.Dir(r.URL.Path)
-	r.URL.RawQuery = ""
+	files, err := d.Readdir(-1)
+	if err != nil {
+		return err
+	}
 
-	w.Header().Set("Location", r.URL.String())
-	w.WriteHeader(http.StatusSeeOther)
+	// make directory appear before the file
+	sort.Slice(files, func(i, j int) bool {
+		if files[i].IsDir() && !files[j].IsDir() {
+			return true
+		} else if !files[i].IsDir() && files[j].IsDir() {
+			return false
+		} else {
+			return files[i].ModTime().After(files[j].ModTime())
+		}
+	})
 
-	return nil
+	data := s.getTemplateData(r, files)
+	tmpl, err := template.ParseFiles(s.rootAssetsPath + string(os.PathSeparator) + "index.html")
+	if err != nil {
+		return err
+	}
+	return tmpl.Execute(w, data)
 }
 
 func (s *server) handleMkdir(w http.ResponseWriter, r *http.Request, currentPath string) (error, int) {
@@ -112,34 +123,42 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request, currentPat
 	return nil, http.StatusSeeOther
 }
 
-func (s *server) handleDir(w http.ResponseWriter, r *http.Request, osPath string) error {
-	d, err := os.Open(osPath)
+func (s *server) handleDelete(w http.ResponseWriter, r *http.Request, filePath string) error {
+	// remove removes the named file or (empty) directory.
+	err := os.Remove(filePath)
 	if err != nil {
-		return err
+		return fmt.Errorf("faild to delete file:%v", err)
 	}
 
-	files, err := d.Readdir(-1)
-	if err != nil {
-		return err
+	// clean url and redirect.
+	// go back to the parent dir after delete file.
+	r.URL.Path = strings.TrimSuffix(r.URL.Path, "/")
+	r.URL.Path = path.Dir(r.URL.Path)
+	r.URL.RawQuery = ""
+
+	w.Header().Set("Location", r.URL.String())
+	w.WriteHeader(http.StatusSeeOther)
+
+	return nil
+}
+
+func (s *server) handleSharedDownload(w http.ResponseWriter, r *http.Request, id string) {
+	fmt.Println(s.sharedFiles)
+	filePath, ok := s.sharedFiles[id]
+	if !ok {
+		s.handleError(w, r, http.StatusNotFound, "no such file")
+		return
 	}
 
-	// make directory appear before the file
-	sort.Slice(files, func(i, j int) bool {
-		if files[i].IsDir() && !files[j].IsDir() {
-			return true
-		} else if !files[i].IsDir() && files[j].IsDir() {
-			return false
-		} else {
-			return files[i].ModTime().After(files[j].ModTime())
-		}
-	})
-
-	data := s.getTemplateData(r, files)
-	tmpl, err := template.ParseFiles(s.rootAssetsPath + string(os.PathSeparator) + "index.html")
+	info, err := os.Stat(filePath)
 	if err != nil {
-		return err
+		s.handleError(w, r, http.StatusInternalServerError, err.Error())
+		return
 	}
-	return tmpl.Execute(w, data)
+
+	w.Header().Set("Content-Disposition", "attachment; filename="+strconv.Quote(info.Name()))
+	w.Header().Set("Content-Type", "application/octet-stream")
+	http.ServeFile(w, r, filePath)
 }
 
 func (s *server) isEmpty(filePath string) (bool, error) {
