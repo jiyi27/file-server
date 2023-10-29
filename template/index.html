@@ -24,7 +24,26 @@
             const url = "?filepath=" + filepath
             let response = await fetch(url)
             const body = await response.text()
-            alert(body)
+
+            if (!response.ok) {
+                alert(body)
+                return
+            }
+
+            const copyText = document.getElementById("shared-url")
+            copyText.value = body
+            showDialog('link')
+        }
+
+        function copyText() {
+            const copyText = document.getElementById("shared-url")
+            navigator.clipboard.writeText(copyText.value)
+                .then(() => {
+                    alert("successfully copied");
+                })
+                .catch(() => {
+                    alert("something went wrong");
+                });
         }
     </script>
 </head>
@@ -53,6 +72,15 @@
             <input type="text" autocomplete="off" name="folder_name" placeholder="Folder Name" required/>
             <button type="submit">create</button>
         </form>
+    </div>
+</div>
+
+<div id="link-dialog" class="dialog-overlay">
+    <div class="dialog" style="height: 20%">
+        <a href="#" class="close" onclick="closeDialog('link')">&times;</a>
+        <h3>Create Share Link Successfully</h3>
+        <input id="shared-url">
+        <button onclick="copyText()">copy</button>
     </div>
 </div>
 

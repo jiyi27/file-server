@@ -31,5 +31,6 @@ func formatPath(path string) string {
 	if !strings.HasPrefix(path, string(os.PathSeparator)) {
 		path = fmt.Sprintf("%v%v", string(os.PathSeparator), path)
 	}
+
 	return path
 }
