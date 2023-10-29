@@ -45,7 +45,7 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// handle generate shared url of file.
 	const pathPrefix = "filepath="
 	if strings.HasPrefix(r.URL.RawQuery, pathPrefix) {
-		filePath := r.URL.RawQuery[len(pathPrefix):]
+		filePath := r.URL.Query()["filepath"][0]
 		filePath = formatPath(filePath)
 		fullPath := s.root + filePath
 		log.Printf(fullPath)
