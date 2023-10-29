@@ -12,6 +12,7 @@ import (
 func (s *server) taskDelegation(w http.ResponseWriter, r *http.Request) {
 	rawQuery := r.URL.RawQuery
 	filePath := s.getFilePath(r)
+	log.Printf(filePath)
 	info, errStat := os.Stat(filePath)
 
 	switch {

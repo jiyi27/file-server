@@ -12,7 +12,6 @@ import (
 
 type file struct {
 	Url         string
-	SharedUrl   string
 	IsDir       bool
 	CanDelete   bool
 	DisplayName template.HTML
@@ -50,7 +49,6 @@ func (s *server) getTemplateData(r *http.Request, files []os.FileInfo) templateD
 		filePath := pwd + string(os.PathSeparator) + filename
 		canDelete := true
 		isDir := false
-		var sharedUrl string
 
 		// if file is directory, no shared url, no size info.
 		if item.IsDir() {
@@ -59,7 +57,6 @@ func (s *server) getTemplateData(r *http.Request, files []os.FileInfo) templateD
 			filename += string(os.PathSeparator)
 			filePath = pwd + string(os.PathSeparator) + filename
 			size = ""
-			sharedUrl = ""
 
 			// only empty dir can be deleted.
 			empty, err := s.isEmpty(filePath)
@@ -70,22 +67,11 @@ func (s *server) getTemplateData(r *http.Request, files []os.FileInfo) templateD
 			if !empty {
 				canDelete = false
 			}
-		} else {
-			// only files can be shared.
-			id, err := s.generateID(10)
-			if err != nil {
-				log.Printf(err.Error())
-			} else {
-				s.sharedFiles[id] = filePath
-				s.domain = strings.TrimSuffix(s.domain, `/`)
-				sharedUrl = fmt.Sprintf("%v%v?shared_id=%v", s.domain, filePath, id)
-			}
 		}
 
 		data.Files = append(data.Files, file{
 			Url:         filePath,
 			IsDir:       isDir,
-			SharedUrl:   sharedUrl,
 			CanDelete:   canDelete,
 			DisplayName: template.HTML(filename),
 			DisplaySize: template.HTML(size),
@@ -103,7 +89,7 @@ func (s *server) generateID(n int) (string, error) {
 			return "", fmt.Errorf("failed to generate file ID: %v", err)
 		}
 
-		_, ok := s.sharedFiles[id]
+		_, ok := s.filesPathToId[id]
 		if ok {
 			continue
 		}

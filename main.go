@@ -14,7 +14,8 @@ func main() {
 		root:           "root",
 		rootAssetsPath: "template",
 		maxFileSize:    1 << 25, // 32MB
-		sharedFiles:    make(map[string]string),
+		filesPathToId:  make(map[string]string),
+		filesIdToPath:  make(map[string]string),
 	}
 	srv.auth.username = os.Getenv("AUTH_USERNAME")
 	srv.auth.password = os.Getenv("AUTH_PASSWORD")

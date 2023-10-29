@@ -19,6 +19,13 @@
         function confirmDelete(name) {
             return confirm('Confirm delete file\n' + name);
         }
+
+        async function getUrl(filepath) {
+            const url = "?filepath=" + filepath
+            let response = await fetch(url)
+            const body = await response.text()
+            alert(body)
+        }
     </script>
 </head>
 <body>
@@ -73,27 +80,13 @@
             {{end}}
         </td>
         <td>
-            {{if .SharedUrl}}
-            <p id="url-text" style="display: none">{{.SharedUrl}}</p>
-            <button onclick="copyText()">share</button>
+            {{if not .IsDir}}
+            <button onclick="getUrl('{{.Url}}')">share</button>
             {{end}}
         </td>
     </tr>
     {{end}}
 </table>
-
-<script>
-    function copyText() {
-        const copyText = document.getElementById("url-text");
-        navigator.clipboard.writeText(copyText.textContent)
-            .then(() => {
-                alert("successfully copied");
-            })
-            .catch(() => {
-                alert("something went wrong");
-            });
-    }
-</script>
 
 </body>
 </html>

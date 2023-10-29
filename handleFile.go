@@ -143,8 +143,7 @@ func (s *server) handleDelete(w http.ResponseWriter, r *http.Request, filePath s
 }
 
 func (s *server) handleSharedDownload(w http.ResponseWriter, r *http.Request, id string) {
-	fmt.Println(s.sharedFiles)
-	filePath, ok := s.sharedFiles[id]
+	filePath, ok := s.filesIdToPath[id]
 	if !ok {
 		s.handleError(w, r, http.StatusNotFound, "no such file")
 		return

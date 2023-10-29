@@ -4,6 +4,9 @@ import (
 	"crypto/rand"
 	"fmt"
 	"math/big"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 func randomString(n int) (string, error) {
@@ -18,4 +21,13 @@ func randomString(n int) (string, error) {
 	}
 
 	return string(res), nil
+}
+
+// formatPath ensures path start with os.PathSeparator ('/') and end with no ('/').
+func formatPath(path string) string {
+	path = strings.TrimSuffix(path, string(os.PathSeparator))
+	if !strings.HasPrefix(path, string(os.PathSeparator)) {
+		path = filepath.Join(string(os.PathSeparator), path)
+	}
+	return path
 }
