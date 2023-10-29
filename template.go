@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 )
 
@@ -27,6 +28,7 @@ type templateData struct {
 	Files          []file
 }
 
+// getTemplateData generates template info under the current directory.
 func (s *server) getTemplateData(r *http.Request, files []os.FileInfo) templateData {
 	pwd := strings.TrimSuffix(r.URL.Path, "/")
 	parentDirPath := pwd
@@ -46,7 +48,7 @@ func (s *server) getTemplateData(r *http.Request, files []os.FileInfo) templateD
 		// init basic info of file entity.
 		filename := item.Name()
 		size := fileSizeBytes(item.Size()).String()
-		filePath := pwd + string(os.PathSeparator) + filename
+		filePath := filepath.Join(pwd, filename)
 		canDelete := true
 		isDir := false
 
@@ -55,7 +57,7 @@ func (s *server) getTemplateData(r *http.Request, files []os.FileInfo) templateD
 			isDir = true
 			// the full path of dir has a separator "/" at the end: path/to/dir/
 			filename += string(os.PathSeparator)
-			filePath = pwd + string(os.PathSeparator) + filename
+			filePath = filepath.Join(pwd, filename)
 			size = ""
 
 			// only empty dir can be deleted.

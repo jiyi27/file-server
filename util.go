@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/big"
 	"os"
-	"path/filepath"
 	"strings"
 )
 
@@ -30,8 +29,7 @@ func formatPath(path string) string {
 
 	path = strings.TrimSuffix(path, string(os.PathSeparator))
 	if !strings.HasPrefix(path, string(os.PathSeparator)) {
-		path = filepath.Join(string(os.PathSeparator), path)
+		path = fmt.Sprintf("%v%v", string(os.PathSeparator), path)
 	}
-
 	return path
 }
