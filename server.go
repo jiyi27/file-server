@@ -28,7 +28,7 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// handle asset.
 	const assetPrefix = "asset="
 	if strings.HasPrefix(r.URL.RawQuery, assetPrefix) {
-		assetName := r.URL.RawQuery[len(assetPrefix):]
+		assetName := r.URL.Query()[strings.TrimSuffix(assetPrefix, "=")][0]
 		s.asset(w, r, assetName)
 		return
 	}
@@ -36,8 +36,7 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// handle download shared file.
 	const idPrefix = "shared_id="
 	if strings.HasPrefix(r.URL.RawQuery, idPrefix) {
-		fileID := r.URL.RawQuery[len(idPrefix):]
-		// 有问题.....
+		fileID := r.URL.Query()[strings.TrimSuffix(idPrefix, "=")][0]
 		s.handleSharedDownload(w, r, fileID)
 		return
 	}
@@ -45,10 +44,9 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// handle generate shared url of file.
 	const pathPrefix = "filepath="
 	if strings.HasPrefix(r.URL.RawQuery, pathPrefix) {
-		filePath := r.URL.Query()["filepath"][0]
+		filePath := r.URL.Query()[strings.TrimSuffix(pathPrefix, "=")][0]
 		filePath = formatPath(filePath)
 		fullPath := s.root + filePath
-		log.Printf(fullPath)
 
 		url, err := s.generateSharedUrl(fullPath)
 		if err != nil {
