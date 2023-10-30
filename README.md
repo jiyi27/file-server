@@ -1,8 +1,8 @@
 ## file-server
 
-A tiny http file storage system written in Go, auth feature is based on HTTP Basic authentication mechanism.
+A tiny http file storage system written in Go, support share file and authentication.
 
-In real development environment, file transfer can be an issue, because there are many files need to be transferred from the personal machine to the development machine and vice versa. With file-server deploying as a server, you can manage (download, upload, delete, create folder) the files easily between different computers esaily.
+In real development environment, file transfer can be an issue, because there are many files need to be transferred from the personal machine to the development machine and vice versa. With file-server deploying as a server, you can manage (download, upload, delete, create folder) the files easily between different computers easily.
 
 ![Go HTTP file server pages](doc/server.gif)
 
