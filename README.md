@@ -28,13 +28,13 @@ Start server on port 8080, root directory is /usr/share/doc:
 ./server -p 8080 -r /usr/share/doc
 ```
 
-Start server on port 80 and 443, 80 serves for plain HTTP, 443 serves for HTTPS.
+Start server on port 80 and 443, 80 serves for plain HTTP, 443 serves for HTTPS:
 
 ```shell
 $ ./server -plain-port 80 -tls-port 443 -ssl-cert ~/tls/server.crt -ssl-key ~/tls/server.key
 ```
 
-For generating TLS Certificate, please refer to: [Simple Golang HTTPS/TLS Examples](https://gist.github.com/denji/12b3a568f092ab951456)
+For generating TLS Certificate, please refer to: https://gist.github.com/denji/12b3a568f092ab951456
 
 Http Basic Auth:
 
