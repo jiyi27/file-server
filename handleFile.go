@@ -71,10 +71,12 @@ func (s *server) handleMkdir(w http.ResponseWriter, r *http.Request, currentPath
 }
 
 func (s *server) handleUpload(w http.ResponseWriter, r *http.Request, currentPath string) (error, int) {
+	maxFileSize := int64(s.maxFileSize * 1024 * 1024)
+
 	// limit the size of incoming request bodies.
-	r.Body = http.MaxBytesReader(w, r.Body, s.maxFileSize)
+	r.Body = http.MaxBytesReader(w, r.Body, maxFileSize)
 	// parse form from request body.
-	if err := r.ParseMultipartForm(s.maxFileSize); err != nil {
+	if err := r.ParseMultipartForm(maxFileSize); err != nil {
 		return fmt.Errorf("file is too large:%v", err), http.StatusBadRequest
 	}
 

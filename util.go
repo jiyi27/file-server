@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"math/big"
+	"net/http"
 	"os"
 	"strings"
 )
@@ -33,4 +34,12 @@ func formatPath(path string) string {
 	}
 
 	return path
+}
+
+func getScheme(r *http.Request) (scheme string) {
+	scheme = "http"
+	if r.TLS != nil {
+		scheme = "https"
+	}
+	return
 }
