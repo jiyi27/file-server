@@ -67,6 +67,16 @@ type server struct {
 }
 
 func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// hsts redirect.
+	if s.hsts && tryHsts(w, r) {
+		return
+	}
+
+	// https redirect.
+	if s.toHttps && tryToHttps(w, r) {
+		return
+	}
+
 	// handle asset.
 	const assetPrefix = "asset="
 	if strings.HasPrefix(r.URL.RawQuery, assetPrefix) {
