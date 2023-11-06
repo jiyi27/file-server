@@ -16,11 +16,13 @@ Will generate executable file "server" in current directory.
 
 ## Examples
 
-Start server on port 8080, root directory is `root/` under the project directory:
+Start server on port 8080, root directory is `root/` under the project:
 
 ```shell
 ./server -p 8080
 ```
+
+> Note: the html and css asset is under `template/` by default, which means it resides in a same parent folder with executable file `server`.
 
 Start server on port 8080, root directory is /usr/share/doc:
 
