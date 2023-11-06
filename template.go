@@ -40,7 +40,7 @@ func (s *server) getTemplateData(r *http.Request, files []os.FileInfo) templateD
 		IsRoot:         pwd == "",
 		PWD:            pwd,
 		ParentDirPath:  parentDirPath,
-		RootAssetsPath: s.rootAssetsPath,
+		RootAssetsPath: s.assetsPath,
 		Files:          make([]file, 0),
 	}
 

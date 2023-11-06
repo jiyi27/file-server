@@ -38,7 +38,7 @@ func (s *server) handleDir(w http.ResponseWriter, r *http.Request, filePath stri
 	})
 
 	data := s.getTemplateData(r, files)
-	tmpl, err := template.ParseFiles(s.rootAssetsPath + string(os.PathSeparator) + "index.html")
+	tmpl, err := template.ParseFiles(s.assetsPath + string(os.PathSeparator) + "index.html")
 	if err != nil {
 		return err
 	}

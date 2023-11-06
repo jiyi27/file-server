@@ -17,15 +17,15 @@ func newServer(p *Param) {
 	hsts := p.ListenPlain != 0 && p.ListenTLS != 0
 
 	s := server{
-		root:           p.root,
-		maxFileSize:    p.maxFileSize,
-		rootAssetsPath: "template/",
-		filesPathToId:  make(map[string]string),
-		filesIdToPath:  make(map[string]string),
-		hsts:           hsts,
-		hstsMaxAge:     "31536000",
-		toHttps:        toHttps,
-		user:           p.user,
+		root:          p.root,
+		maxFileSize:   p.maxFileSize,
+		assetsPath:    p.assetPath,
+		filesPathToId: make(map[string]string),
+		filesIdToPath: make(map[string]string),
+		hsts:          hsts,
+		hstsMaxAge:    "31536000",
+		toHttps:       toHttps,
+		user:          p.user,
 	}
 
 	// init server
@@ -55,9 +55,9 @@ func newServer(p *Param) {
 }
 
 type server struct {
-	root           string
-	rootAssetsPath string // html and css files
-	maxFileSize    int    // MB
+	root        string
+	assetsPath  string // html and css files
+	maxFileSize int    // MB
 
 	hsts       bool // enable HSTS(HTTP Strict Transport Security).
 	hstsMaxAge string
@@ -142,7 +142,7 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) asset(w http.ResponseWriter, r *http.Request, assetName string) {
-	path := s.rootAssetsPath + string(os.PathSeparator) + assetName
+	path := s.assetsPath + string(os.PathSeparator) + assetName
 	http.ServeFile(w, r, path)
 }
 
