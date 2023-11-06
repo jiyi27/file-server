@@ -28,6 +28,12 @@ func newServer(p *Param) {
 		user:           p.user,
 	}
 
+	// init server
+	err := s.init()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	switch {
 	case p.ListenPlain != 0 && p.ListenTLS == 0: // only plain http
 		log.Printf("listening http on %v", p.ListenPlain)
@@ -64,6 +70,15 @@ type server struct {
 		username string
 		password string
 	}
+}
+
+func (s *server) init() error {
+	err := os.MkdirAll(s.root, 0750)
+	if err != nil {
+		return fmt.Errorf("faild to create root folder %v:%v", s.root, err)
+	}
+
+	return nil
 }
 
 func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
