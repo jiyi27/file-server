@@ -4,8 +4,10 @@ import (
 	"crypto/rand"
 	"fmt"
 	"math/big"
+	"mime"
 	"net/http"
 	"os"
+	"path"
 	"strings"
 )
 
@@ -36,10 +38,33 @@ func formatPath(path string) string {
 	return path
 }
 
+// getScheme returns 'http' or 'https'
 func getScheme(r *http.Request) (scheme string) {
 	scheme = "http"
 	if r.TLS != nil {
 		scheme = "https"
 	}
 	return
+}
+
+func getContentType(filepath string) (string, error) {
+	ext := path.Ext(filepath)
+	ctype := mime.TypeByExtension(ext)
+	if len(ctype) > 0 {
+		return ctype, nil
+	}
+
+	file, err := os.Open(filepath)
+	if err != nil {
+		return "", fmt.Errorf("failed to get content type:%v", err)
+	}
+
+	buf := make([]byte, 512)
+	n, err := file.Read(buf)
+	if err != nil {
+		return ctype, err
+	}
+
+	ctype = http.DetectContentType(buf[:n])
+	return ctype, nil
 }

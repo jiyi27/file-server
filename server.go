@@ -142,8 +142,17 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) asset(w http.ResponseWriter, r *http.Request, assetName string) {
-	path := s.assetsPath + string(os.PathSeparator) + assetName
-	http.ServeFile(w, r, path)
+	header := w.Header()
+	header.Set("X-Content-Type-Options", "nosniff")
+	header.Set("Cache-Control", "public, max-age=3600")
+
+	filepath := s.assetsPath + string(os.PathSeparator) + assetName
+	ctype, _ := getContentType(filepath)
+	if ctype != "" {
+		header.Set("Content-Type", ctype)
+	}
+
+	http.ServeFile(w, r, filepath)
 }
 
 // generateSharedUrl generates a link for the file and add its id and path to a map.
