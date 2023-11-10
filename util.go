@@ -62,7 +62,7 @@ func getContentType(filepath string) (string, error) {
 	buf := make([]byte, 512)
 	n, err := file.Read(buf)
 	if err != nil {
-		return ctype, err
+		return "", err
 	}
 
 	ctype = http.DetectContentType(buf[:n])
