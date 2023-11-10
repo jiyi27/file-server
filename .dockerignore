@@ -1,0 +1,9 @@
+root/
+doc/
+
+.idea/
+
+.git/
+.gitignore
+
+.DS_Store
