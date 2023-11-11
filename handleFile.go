@@ -55,7 +55,8 @@ func (s *server) handleMkdir(w http.ResponseWriter, r *http.Request, currentPath
 	// Get username and password form the parsed form.
 	folderName := r.Form.Get("folder_name")
 	flPath := filepath.Join(currentPath, folderName)
-	err := os.Mkdir(flPath, 0750)
+	// 644: -rw-r--r--
+	err := os.Mkdir(flPath, 0644)
 
 	if err != nil {
 		err = fmt.Errorf("failed to create folder: %v", err)
