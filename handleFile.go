@@ -42,6 +42,10 @@ func (s *server) handleDir(w http.ResponseWriter, r *http.Request, filePath stri
 	if err != nil {
 		return err
 	}
+
+	w.Header().Set("Connection", "Keep-Alive")
+	w.Header().Set("Keep-Alive", "timeout=2, max=1000")
+
 	return tmpl.Execute(w, data)
 }
 
