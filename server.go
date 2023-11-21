@@ -1,8 +1,6 @@
 package main
 
 import (
-	"crypto/sha256"
-	"crypto/subtle"
 	"errors"
 	"fmt"
 	"log"
@@ -25,7 +23,7 @@ func newServer(p *Param) {
 		hsts:          hsts,
 		hstsMaxAge:    "31536000",
 		toHttps:       toHttps,
-		user:          p.user,
+		authUsers:     p.users,
 	}
 
 	// init server
@@ -63,13 +61,10 @@ type server struct {
 	hstsMaxAge string
 	toHttps    bool // redirect plain HTTP request to HTTPS TLS port.
 
-	filesPathToId map[string]string
-	filesIdToPath map[string]string
+	filesPathToId map[string]string // used for file sharing
+	filesIdToPath map[string]string // used for file sharing
 
-	user struct {
-		username string
-		password string
-	}
+	authUsers []user // username as index
 }
 
 func (s *server) init() error {
@@ -127,18 +122,46 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// handle auth.
-	username, password, ok := r.BasicAuth()
-	if ok {
-		okVerify := s.verifyAuth(username, password)
-		if okVerify {
-			// task delegation
-			s.taskDelegation(w, r)
-			return
-		}
+	// format request path, empty path equals to "/"
+	if r.URL.Path == "" {
+		r.URL.Path = "/"
 	}
 
-	s.notifyAuth(w)
+	// no auth users, handle request directly.
+	if len(s.authUsers) == 0 {
+		s.taskDelegation(w, r)
+		return
+	}
+
+	authUser := s.getUserByPath(r.URL.Path)
+	// no path needs auth, handle request directly.
+	if authUser == nil {
+		s.taskDelegation(w, r)
+		return
+	}
+
+	username, password, ok := r.BasicAuth()
+	if ok {
+		if username == authUser.username && password == authUser.password {
+			s.taskDelegation(w, r)
+		} else {
+			authUser.notifyAuth(w)
+		}
+		return
+	}
+
+	authUser.notifyAuth(w)
+}
+
+func (s *server) getUserByPath(path string) *user {
+	for _, v := range s.authUsers {
+		// authUsers are sorted by the depth of dir, the deepest dir depth at first
+		// e.g., if the request path is /aa/bb/cc, then path /aa/bb will match first compared with /aa
+		if strings.HasPrefix(path, v.path) {
+			return &v
+		}
+	}
+	return nil
 }
 
 func (s *server) asset(w http.ResponseWriter, r *http.Request, assetName string) {
@@ -178,23 +201,6 @@ func (s *server) generateSharedUrl(r *http.Request, filePath string) (string, er
 	}
 
 	return fmt.Sprintf("%v://%v?shared_id=%v", getScheme(r), r.Host, id), nil
-}
-
-func (s *server) notifyAuth(w http.ResponseWriter) {
-	w.Header().Set("WWW-Authenticate", `Basic realm="private", charset="UTF-8"`)
-	http.Error(w, "Unauthorized", http.StatusUnauthorized)
-}
-
-func (s *server) verifyAuth(username, password string) bool {
-	usernameHash := sha256.Sum256([]byte(username))
-	passwordHash := sha256.Sum256([]byte(password))
-	expectedUsernameHash := sha256.Sum256([]byte(s.user.username))
-	expectedPasswordHash := sha256.Sum256([]byte(s.user.password))
-
-	usernameMatch := subtle.ConstantTimeCompare(usernameHash[:], expectedUsernameHash[:]) == 1
-	passwordMatch := subtle.ConstantTimeCompare(passwordHash[:], expectedPasswordHash[:]) == 1
-
-	return usernameMatch && passwordMatch
 }
 
 func (s *server) handleError(w http.ResponseWriter, _ *http.Request, status int, msg string) {
