@@ -15,9 +15,9 @@ func newServer(p *Param) {
 	hsts := p.ListenPlain != 0 && p.ListenTLS != 0
 
 	s := server{
+		theme:         newTheme(),
 		root:          p.root,
 		maxFileSize:   p.maxFileSize,
-		assetsPath:    p.assetPath,
 		filesPathToId: make(map[string]string),
 		filesIdToPath: make(map[string]string),
 		hsts:          hsts,
@@ -53,9 +53,10 @@ func newServer(p *Param) {
 }
 
 type server struct {
+	theme *Theme
+
 	root        string
-	assetsPath  string // html and css files
-	maxFileSize int    // MB
+	maxFileSize int // MB
 
 	hsts       bool // enable HSTS(HTTP Strict Transport Security).
 	hstsMaxAge string
@@ -122,7 +123,7 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// format request path, empty path equals to "/"
+	// format request path, empty path equals to "/".
 	if r.URL.Path == "" {
 		r.URL.Path = "/"
 	}
@@ -169,13 +170,7 @@ func (s *server) asset(w http.ResponseWriter, r *http.Request, assetName string)
 	header.Set("X-Content-Type-Options", "nosniff")
 	header.Set("Cache-Control", "public, max-age=3600")
 
-	filepath := s.assetsPath + string(os.PathSeparator) + assetName
-	ctype, _ := getContentType(filepath)
-	if ctype != "" {
-		header.Set("Content-Type", ctype)
-	}
-
-	http.ServeFile(w, r, filepath)
+	s.theme.RenderAsset(w, r, assetName)
 }
 
 // generateSharedUrl generates a link for the file and add its id and path to a map.

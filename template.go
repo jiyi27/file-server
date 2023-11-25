@@ -37,11 +37,10 @@ func (s *server) getTemplateData(r *http.Request, files []os.FileInfo) templateD
 	}
 
 	data := templateData{
-		IsRoot:         pwd == "",
-		PWD:            pwd,
-		ParentDirPath:  parentDirPath,
-		RootAssetsPath: s.assetsPath,
-		Files:          make([]file, 0),
+		IsRoot:        pwd == "",
+		PWD:           pwd,
+		ParentDirPath: parentDirPath,
+		Files:         make([]file, 0),
 	}
 
 	for _, item := range files {

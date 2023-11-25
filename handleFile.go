@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"html/template"
 	"io"
 	"net/http"
 	"os"
@@ -38,12 +37,7 @@ func (s *server) handleDir(w http.ResponseWriter, r *http.Request, filePath stri
 	})
 
 	data := s.getTemplateData(r, files)
-	tmpl, err := template.ParseFiles(s.assetsPath + string(os.PathSeparator) + "index.html")
-	if err != nil {
-		return err
-	}
-
-	return tmpl.Execute(w, data)
+	return s.theme.RenderPage(w, data)
 }
 
 func (s *server) handleMkdir(w http.ResponseWriter, r *http.Request, currentPath string) (error, int) {
