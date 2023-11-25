@@ -8,7 +8,9 @@ In real development environment, file transfer can be an issue, because there ar
 
 ## Features
 
-- Friendly UI 
+- Friendly UI
+- Zero dependencies
+- Single executable file
 - Upload files to the current directory
 - Create folder at the current directory
 - Can generate shared download link for a file
@@ -29,8 +31,6 @@ Start server on port 8080, root directory is `root/` under the project:
 ```shell
 ./server -p 8080
 ```
-
-> Note: the html and css asset is under `template/` by default, which means it resides in a same parent folder with executable file `server`.
 
 Start server on port 8080, root directory is /usr/share/doc:
 
@@ -74,8 +74,6 @@ $./server -auth /abc:user1:user1pw -auth /aaa/bbb:user2:user2pw -plain-port 80 -
 ```shell
 ❯ ./server -h                                                                                                                      
 Usage of ./server:
-  -asset string
-        directory for storing assets (html, css files) (default "template/")
   -auth value
         -auth <path:username:password>
         specify user for HTTP Basic Auth
