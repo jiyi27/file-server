@@ -69,6 +69,8 @@ type server struct {
 }
 
 func (s *server) init() error {
+	// 750: -wxr-wr-----
+	// x means can access directory.
 	err := os.MkdirAll(s.root, 0750)
 	if err != nil {
 		return fmt.Errorf("faild to create root folder %v:%v", s.root, err)
