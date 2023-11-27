@@ -14,8 +14,8 @@ import (
 	"time"
 )
 
-func (s *server) handleDir(w http.ResponseWriter, r *http.Request, filePath string) error {
-	d, err := os.Open(filePath)
+func (s *server) handleDir(w http.ResponseWriter, r *http.Request, currentDir string) error {
+	d, err := os.Open(currentDir)
 	if err != nil {
 		return err
 	}
@@ -40,7 +40,7 @@ func (s *server) handleDir(w http.ResponseWriter, r *http.Request, filePath stri
 	return s.theme.RenderPage(w, data)
 }
 
-func (s *server) handleMkdir(w http.ResponseWriter, r *http.Request, currentPath string) (error, int) {
+func (s *server) handleMkdir(w http.ResponseWriter, r *http.Request, currentDir string) (error, int) {
 	// Parse form.
 	if err := r.ParseForm(); err != nil {
 		err = fmt.Errorf("failed to parse folder name: %v", err)
@@ -49,7 +49,7 @@ func (s *server) handleMkdir(w http.ResponseWriter, r *http.Request, currentPath
 
 	// Get username and password form the parsed form.
 	folderName := r.Form.Get("folder_name")
-	flPath := filepath.Join(currentPath, folderName)
+	flPath := filepath.Join(currentDir, folderName)
 	// 750: -wxr-wr-----
 	// x means can access directory.
 	err := os.Mkdir(flPath, 0750)
@@ -67,7 +67,7 @@ func (s *server) handleMkdir(w http.ResponseWriter, r *http.Request, currentPath
 	return nil, http.StatusOK
 }
 
-func (s *server) handleUpload(w http.ResponseWriter, r *http.Request, currentPath string) (error, int) {
+func (s *server) handleUpload(w http.ResponseWriter, r *http.Request, currentDir string) (error, int) {
 	maxFileSize := int64(s.maxFileSize * 1024 * 1024)
 
 	// limit the size of incoming request bodies.
@@ -87,15 +87,16 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request, currentPat
 	}
 	defer parsedFile.Close()
 
-	dstPath := filepath.Join(currentPath, filepath.Base(parsedFileHeader.Filename))
+	dstPath := filepath.Join(currentDir, filepath.Base(parsedFileHeader.Filename))
 	var dst *os.File
 	_, err = os.Stat(dstPath)
 	// the name of parsed file already exists, create a dst file with a new name.
 	if err == nil {
 		filename := strings.Split(parsedFileHeader.Filename, ".")[0] +
+			"_" +
 			strconv.FormatInt(time.Now().UnixNano(), 10) +
 			filepath.Ext(parsedFileHeader.Filename)
-		dst, err = os.Create(filepath.Join(dstPath, filename))
+		dst, err = os.Create(filepath.Join(currentDir, filename))
 	} else if os.IsNotExist(err) {
 		// the name of parsed file already exists, create a dst file with original name.
 		dst, err = os.Create(dstPath)
