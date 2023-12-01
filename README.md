@@ -29,8 +29,9 @@ Will generate executable file "server" in current directory.
 Start server on port 8080, root directory is `root/` under the project:
 
 ```shell
-./server -p 8080
+nohup ./server -p 8080 &
 ```
+> `nohup` detaches the process from the terminal and redirects its output to nohup.out
 
 Start server on port 8080, root directory is /usr/share/doc:
 
