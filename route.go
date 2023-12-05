@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"os"
@@ -22,9 +23,16 @@ func (s *server) taskDelegation(w http.ResponseWriter, r *http.Request) {
 	case errStat != nil:
 		s.handleError(w, r, http.StatusInternalServerError, errStat.Error())
 	case info.IsDir() && strings.HasPrefix(r.URL.RawQuery, "upload"):
-		err, status := s.handleUpload(w, r, filePath)
-		if err != nil {
-			s.handleError(w, r, status, err.Error())
+		errs := s.handleUpload(w, r, filePath)
+		if len(errs) == 0 {
+			// clean url and redirect
+			r.URL.RawQuery = ""
+			w.Header().Set("Location", r.URL.String())
+			w.WriteHeader(http.StatusSeeOther)
+		} else {
+			w.Header().Set("Content-Type", "application/json; charset=utf-8")
+			w.WriteHeader(http.StatusInternalServerError)
+			_ = json.NewEncoder(w).Encode(errs)
 		}
 	case info.IsDir() && strings.HasPrefix(r.URL.RawQuery, "mkdir"):
 		err, status := s.handleMkdir(w, r, filePath)

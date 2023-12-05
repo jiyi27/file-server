@@ -66,17 +66,15 @@ func (s *server) handleMkdir(w http.ResponseWriter, r *http.Request, currentDir 
 	return nil, http.StatusOK
 }
 
-func (s *server) handleUpload(w http.ResponseWriter, r *http.Request, currentDir string) (error, int) {
-	var errs []error
-
+func (s *server) handleUpload(w http.ResponseWriter, r *http.Request, currentDir string) (errs []uploadError) {
 	// limit the size of incoming request bodies.
 	maxFileSize := int64(s.maxFileSize * 1024 * 1024)
 	r.Body = http.MaxBytesReader(w, r.Body, maxFileSize)
 
 	reader, err := r.MultipartReader()
 	if err != nil {
-		errs = append(errs, fmt.Errorf("an error occurred when parse requesr body:%v", err))
-		return fmt.Errorf("an error occurred when parse uploaded file from requesr body:%v", err), http.StatusBadRequest
+		errs = append(errs, uploadError{Message: fmt.Sprintf("an error occurred when parse request body:%v", err)})
+		return
 	}
 
 	for {
@@ -86,7 +84,7 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request, currentDir
 			if err == io.EOF {
 				break
 			}
-			errs = append(errs, fmt.Errorf("an error occurred when get file from multipart.Reader:%v", err))
+			errs = append(errs, uploadError{Message: fmt.Sprintf("an error occurred when parse request body:%v", err)})
 			continue
 		}
 
@@ -99,29 +97,34 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request, currentDir
 		dstPath := filepath.Join(currentDir, filename)
 		dst, err := os.Create(dstPath)
 		if err != nil {
-			errs = append(errs, fmt.Errorf("an error occurred when create file %v:%v", part.FileName(), err))
+			errs = append(errs, uploadError{
+				FileName: part.FileName(),
+				Message:  fmt.Sprintf("an error occurred when create file:%v", err),
+			})
 			continue
 		}
 
 		// io.Copy() will stream the file to dst, part is a reader with Read() method.
 		_, err = io.Copy(dst, part)
 		if err != nil {
-			errs = append(errs, fmt.Errorf("an error occurred when copy file %v:%v", part.FileName(), err))
+			errs = append(errs, uploadError{
+				FileName: part.FileName(),
+				Message:  fmt.Sprintf("an error occurred when copy file:%v", err),
+			})
 			continue
 		}
 
 		// considering the buffering mechanism, getting error when close a writable file is needed.
 		if err = dst.Close(); err != nil {
-			errs = append(errs, fmt.Errorf("an error occurred when close target file %v:%v", part.FileName(), err))
+			errs = append(errs, uploadError{
+				FileName: part.FileName(),
+				Message:  fmt.Sprintf("an error occurred when close file:%v", err),
+			})
 			continue
 		}
 	}
 
-	// clean url and redirect
-	r.URL.RawQuery = ""
-	w.Header().Set("Location", r.URL.String())
-	w.WriteHeader(http.StatusSeeOther)
-	return nil, http.StatusSeeOther
+	return
 }
 
 func getAvailableName(fileDir, fileName string) string {
@@ -190,4 +193,9 @@ func (s *server) isEmpty(filePath string) (bool, error) {
 
 	// either not empty or error
 	return false, err
+}
+
+type uploadError struct {
+	FileName string `json:"fileName"`
+	Message  string `json:"message"`
 }
