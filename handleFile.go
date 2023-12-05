@@ -84,8 +84,8 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request, currentDir
 			if err == io.EOF {
 				break
 			}
-			errs = append(errs, uploadError{Message: fmt.Sprintf("an error occurred when parse request body:%v", err)})
-			continue
+			errs = append(errs, uploadError{Message: fmt.Sprintf("reader.NextPart(): %v", err)})
+			return
 		}
 
 		// not a file, move to the next part.
@@ -99,7 +99,7 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request, currentDir
 		if err != nil {
 			errs = append(errs, uploadError{
 				FileName: part.FileName(),
-				Message:  fmt.Sprintf("an error occurred when create file:%v", err),
+				Message:  fmt.Sprintf("create file: %v", err),
 			})
 			continue
 		}
@@ -109,8 +109,14 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request, currentDir
 		if err != nil {
 			errs = append(errs, uploadError{
 				FileName: part.FileName(),
-				Message:  fmt.Sprintf("an error occurred when copy file:%v", err),
+				Message:  fmt.Sprintf("copy file: %v", err),
 			})
+			dst.Close()
+
+			if err.Error() == "http: request body too large" {
+				return
+			}
+
 			continue
 		}
 
@@ -118,7 +124,7 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request, currentDir
 		if err = dst.Close(); err != nil {
 			errs = append(errs, uploadError{
 				FileName: part.FileName(),
-				Message:  fmt.Sprintf("an error occurred when close file:%v", err),
+				Message:  fmt.Sprintf("close file: %v", err),
 			})
 			continue
 		}
