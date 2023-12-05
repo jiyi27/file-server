@@ -11,7 +11,8 @@ In real development environment, file transfer can be an issue, because there ar
 - Friendly UI
 - Zero dependencies
 - Single executable file
-- Upload files to the current directory
+- Upload multiple files one time
+- Stream file to server, friendly for uploading large file
 - Create folder at the current directory
 - Can generate shared download link for a file
 - Can specify authentication for custom directories
