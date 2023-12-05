@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -68,52 +67,54 @@ func (s *server) handleMkdir(w http.ResponseWriter, r *http.Request, currentDir 
 }
 
 func (s *server) handleUpload(w http.ResponseWriter, r *http.Request, currentDir string) (error, int) {
-	maxFileSize := int64(s.maxFileSize * 1024 * 1024)
+	var errs []error
 
 	// limit the size of incoming request bodies.
+	maxFileSize := int64(s.maxFileSize * 1024 * 1024)
 	r.Body = http.MaxBytesReader(w, r.Body, maxFileSize)
-	// parse form from request body.
-	if err := r.ParseMultipartForm(maxFileSize); err != nil {
-		return fmt.Errorf("file is too large:%v", err), http.StatusBadRequest
-	}
 
-	// obtain file from parsed form.
-	parsedFile, parsedFileHeader, err := r.FormFile("file")
-	if errors.Is(err, http.ErrMissingFile) {
-		w.Header().Set("Location", r.URL.String())
-	}
+	reader, err := r.MultipartReader()
 	if err != nil {
-		return err, http.StatusSeeOther
-	}
-	defer parsedFile.Close()
-
-	dstPath := filepath.Join(currentDir, filepath.Base(parsedFileHeader.Filename))
-	var dst *os.File
-	_, err = os.Stat(dstPath)
-	// the name of parsed file already exists, create a dst file with a new name.
-	if err == nil {
-		filename := strings.Split(parsedFileHeader.Filename, ".")[0] +
-			"_" +
-			strconv.FormatInt(time.Now().UnixNano(), 10) +
-			filepath.Ext(parsedFileHeader.Filename)
-		dst, err = os.Create(filepath.Join(currentDir, filename))
-	} else if os.IsNotExist(err) {
-		// the name of parsed file already exists, create a dst file with original name.
-		dst, err = os.Create(dstPath)
-	}
-	if err != nil {
-		return fmt.Errorf("failed to create file: %v", err), http.StatusInternalServerError
-	}
-	defer dst.Close()
-
-	_, err = io.Copy(dst, parsedFile)
-	if err != nil {
-		return fmt.Errorf("failed to copy file: %v", err), http.StatusInternalServerError
+		errs = append(errs, fmt.Errorf("an error occurred when parse requesr body:%v", err))
+		return fmt.Errorf("an error occurred when parse uploaded file from requesr body:%v", err), http.StatusBadRequest
 	}
 
-	// considering the buffering mechanism, getting error when close a writable file is needed.
-	if err = dst.Close(); err != nil {
-		return fmt.Errorf("failed to close dst fileHtml: %v", err), http.StatusInternalServerError
+	for {
+		// reader.NextPart() will close the previous part automatically.
+		part, err := reader.NextPart()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			errs = append(errs, fmt.Errorf("an error occurred when get file from multipart.Reader:%v", err))
+			continue
+		}
+
+		// not a file, move to the next part.
+		if part.FileName() == "" {
+			continue
+		}
+
+		filename := getAvailableName(currentDir, part.FileName())
+		dstPath := filepath.Join(currentDir, filename)
+		dst, err := os.Create(dstPath)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("an error occurred when create file %v:%v", part.FileName(), err))
+			continue
+		}
+
+		// io.Copy() will stream the file to dst, part is a reader with Read() method.
+		_, err = io.Copy(dst, part)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("an error occurred when copy file %v:%v", part.FileName(), err))
+			continue
+		}
+
+		// considering the buffering mechanism, getting error when close a writable file is needed.
+		if err = dst.Close(); err != nil {
+			errs = append(errs, fmt.Errorf("an error occurred when close target file %v:%v", part.FileName(), err))
+			continue
+		}
 	}
 
 	// clean url and redirect
@@ -121,6 +122,20 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request, currentDir
 	w.Header().Set("Location", r.URL.String())
 	w.WriteHeader(http.StatusSeeOther)
 	return nil, http.StatusSeeOther
+}
+
+func getAvailableName(fileDir, fileName string) string {
+	filePath := path.Join(fileDir, fileName)
+	// file already exists, generate a new name.
+	if _, err := os.Stat(filePath); err == nil {
+		fileName =
+			strings.Split(fileName, ".")[0] +
+				"_" +
+				strconv.FormatInt(time.Now().UnixNano(), 10) +
+				filepath.Ext(fileName)
+	}
+	// no such file, use the original name.
+	return fileName
 }
 
 func (s *server) handleDelete(w http.ResponseWriter, r *http.Request, filePath string) error {

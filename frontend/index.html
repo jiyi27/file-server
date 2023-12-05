@@ -58,7 +58,7 @@
         <a href="#" class="close" onclick="closeDialog('upload')">&times;</a>
         <h2>Upload File</h2>
         <form method="POST" action="{{.PWD}}?upload" enctype="multipart/form-data">
-            <input required name="file" type="file"/>
+            <input required name="file" type="file" multiple="multiple"/>
             <button type="submit">upload</button>
         </form>
     </div>
