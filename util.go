@@ -8,7 +8,10 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
+	"strconv"
 	"strings"
+	"time"
 )
 
 func randomString(n int) (string, error) {
@@ -67,4 +70,18 @@ func getContentType(filepath string) (string, error) {
 
 	ctype = http.DetectContentType(buf[:n])
 	return ctype, nil
+}
+
+func getAvailableName(fileDir, fileName string) string {
+	filePath := path.Join(fileDir, fileName)
+	// file already exists, generate a new name.
+	if _, err := os.Stat(filePath); err == nil {
+		fileName =
+			strings.Split(fileName, ".")[0] +
+				"_" +
+				strconv.FormatInt(time.Now().UnixNano(), 10) +
+				filepath.Ext(fileName)
+	}
+	// no such file, use the original name.
+	return fileName
 }

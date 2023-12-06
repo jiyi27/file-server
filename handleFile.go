@@ -10,7 +10,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 )
 
 func (s *server) handleDir(w http.ResponseWriter, r *http.Request, currentDir string) error {
@@ -73,7 +72,7 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request, currentDir
 
 	reader, err := r.MultipartReader()
 	if err != nil {
-		errs = append(errs, uploadError{Message: fmt.Sprintf("an error occurred when parse request body:%v", err)})
+		errs = append(errs, uploadError{Message: fmt.Sprintf("parse request body: %v", err)})
 		return
 	}
 
@@ -81,11 +80,11 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request, currentDir
 		// reader.NextPart() will close the previous part automatically.
 		part, err := reader.NextPart()
 		if err != nil {
-			if err == io.EOF {
+			if err == io.EOF { // finish reading all parts, exit the loop
 				break
 			}
 			errs = append(errs, uploadError{Message: fmt.Sprintf("reader.NextPart(): %v", err)})
-			return
+			continue
 		}
 
 		// not a file, move to the next part.
@@ -104,15 +103,19 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request, currentDir
 			continue
 		}
 
-		// io.Copy() will stream the file to dst, part is a reader with Read() method.
+		// io.Copy() will stream the file to dst, multipart.Part is an io.Reader.
 		_, err = io.Copy(dst, part)
 		if err != nil {
 			errs = append(errs, uploadError{
 				FileName: part.FileName(),
 				Message:  fmt.Sprintf("copy file: %v", err),
 			})
-			dst.Close()
+			_ = dst.Close()
 
+			// copy failed, delete the file
+			_ = os.Remove(dstPath)
+
+			// file too large, stop uploading
 			if err.Error() == "http: request body too large" {
 				return
 			}
@@ -126,25 +129,15 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request, currentDir
 				FileName: part.FileName(),
 				Message:  fmt.Sprintf("close file: %v", err),
 			})
+
+			// close failed, delete the file
+			_ = os.Remove(dstPath)
+
 			continue
 		}
 	}
 
 	return
-}
-
-func getAvailableName(fileDir, fileName string) string {
-	filePath := path.Join(fileDir, fileName)
-	// file already exists, generate a new name.
-	if _, err := os.Stat(filePath); err == nil {
-		fileName =
-			strings.Split(fileName, ".")[0] +
-				"_" +
-				strconv.FormatInt(time.Now().UnixNano(), 10) +
-				filepath.Ext(fileName)
-	}
-	// no such file, use the original name.
-	return fileName
 }
 
 func (s *server) handleDelete(w http.ResponseWriter, r *http.Request, filePath string) error {
