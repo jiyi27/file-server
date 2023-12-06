@@ -123,7 +123,9 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request, currentDir
 			continue
 		}
 
-		// considering the buffering mechanism, getting error when close a writable file is needed.
+		// closing a writer may flush all buffered data to the underlying io.Writer.
+		// this fails means the file is not written completely.
+		// so we need to delete the file.
 		if err = dst.Close(); err != nil {
 			errs = append(errs, uploadError{
 				FileName: part.FileName(),
