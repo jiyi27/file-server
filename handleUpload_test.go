@@ -39,3 +39,46 @@ func TestHandleUpload_FileTooLarge(t *testing.T) {
 
 	_ = os.RemoveAll(currentDir)
 }
+
+// ---------------------benchmark---------------------
+// go test -run=xxx -bench 'BenchmarkDirectRead|BenchmarkLimitedRead'
+var sampleData []byte
+
+func init() {
+	dataSize := int64(1024 * 1024 * 5) // 5MB
+	sampleData = make([]byte, dataSize)
+	for i := range sampleData {
+		sampleData[i] = byte(i % 255)
+	}
+}
+
+func getDataSource() io.Reader {
+	return &multipart.Part{}
+}
+
+func BenchmarkDirectRead(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		dataSource := getDataSource()
+		_, _ = io.Copy(io.Discard, dataSource)
+	}
+}
+
+func BenchmarkLimitedRead(b *testing.B) {
+	limit := int64(1024 * 1024 * 10) // 10MB
+	for i := 0; i < b.N; i++ {
+		dataSource := getDataSource()
+		limitedReader := &LimitedReader{R: dataSource, N: limit}
+		_, _ = io.Copy(io.Discard, limitedReader)
+	}
+}
+
+type LimitedReader struct {
+	R io.Reader
+	N int64
+}
+
+// for test reason, very simple
+func (l *LimitedReader) Read(p []byte) (n int, err error) {
+	n, err = l.R.Read(p)
+	return
+}
