@@ -54,6 +54,8 @@ Http Basic Auth:
 - Require authentication for accessing all files
 
 ```shell
+./server -p 8080 -auth :admin:adminpw
+# or
 ./server -p 8080 -auth /:admin:adminpw
 ```
 
