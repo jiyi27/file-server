@@ -27,7 +27,7 @@ type Param struct {
 }
 
 func (p *Param) init() {
-	var auths authFlags
+	var users usersFlag
 
 	flag.StringVar(&p.root, "root", "root/", "root directory for the file server")
 	flag.StringVar(&p.root, "r", "root/", "(alias for -root)")
@@ -37,7 +37,7 @@ func (p *Param) init() {
 	flag.IntVar(&p.ListenTLS, "tls-port", 0, "tls port the server listens on, will fail if cert or key is not specified")
 	flag.StringVar(&p.TLSCert, "ssl-cert", "", "path to SSL server certificate")
 	flag.StringVar(&p.TLSKey, "ssl-key", "", "path to SSL private key")
-	flag.Var(&auths, "auth", fmt.Sprintf("-auth <path:username:password>\n"+
+	flag.Var(&users, "auth", fmt.Sprintf("-auth <path:username:password>\n"+
 		"specify user for HTTP Basic Auth"))
 
 	flag.Parse()
@@ -49,29 +49,27 @@ func (p *Param) init() {
 		}
 	}
 
-	for _, v := range auths {
-		values := strings.Split(v, ":")
-		if len(values) != 3 {
-			log.Fatal("wrong format of auth, format: path:username:password")
-		}
-		p.users = append(
-			p.users,
-			user{
-				username: values[1],
-				password: values[2],
-				path:     values[0],
-			},
-		)
+	p.users = users
+}
+
+type usersFlag []user
+
+func (u *usersFlag) String() string {
+	return fmt.Sprintf("%v", *u)
+}
+
+func (u *usersFlag) Set(value string) error {
+	values := strings.Split(value, ":")
+	if len(values) != 3 {
+		return fmt.Errorf("wrong format of auth, format: path:username:password")
 	}
-}
-
-type authFlags []string
-
-func (a *authFlags) String() string {
-	return fmt.Sprintf("%v", *a)
-}
-
-func (a *authFlags) Set(value string) error {
-	*a = append(*a, value)
+	*u = append(
+		*u,
+		user{
+			username: values[1],
+			password: values[2],
+			path:     formatPath(values[0]),
+		},
+	)
 	return nil
 }

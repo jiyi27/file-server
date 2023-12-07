@@ -41,6 +41,15 @@ func formatPath(path string) string {
 	return path
 }
 
+// PathDepth calculates the depth of a directory in the file path.
+func PathDepth(path string) int {
+	if path == "/" {
+		return 0
+	}
+
+	return len(strings.Split(filepath.Clean(path), string(filepath.Separator))) - 1
+}
+
 // getScheme returns 'http' or 'https'
 func getScheme(r *http.Request) (scheme string) {
 	scheme = "http"

@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sort"
 	"strings"
 )
 
@@ -27,8 +28,7 @@ func newServer(p *Param) {
 	}
 
 	// init server
-	err := s.init()
-	if err != nil {
+	if err := s.init(); err != nil {
 		log.Fatal(err)
 	}
 
@@ -75,6 +75,11 @@ func (s *server) init() error {
 	if err != nil {
 		return fmt.Errorf("faild to create root folder %v:%v", s.root, err)
 	}
+
+	// sort auth users by the depth of dir, the deepest dir depth at first.
+	sort.Slice(s.authUsers, func(i, j int) bool {
+		return PathDepth(s.authUsers[i].path) > PathDepth(s.authUsers[j].path)
+	})
 
 	return nil
 }
@@ -158,8 +163,7 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (s *server) getUserByPath(path string) *user {
 	for _, v := range s.authUsers {
-		// authUsers are sorted by the depth of dir, the deepest dir depth at first
-		// e.g., if the request path is /aa/bb/cc, then path /aa/bb will match first compared with /aa
+		// the deepest dir depth match first.
 		if strings.HasPrefix(path, v.path) {
 			return &v
 		}
