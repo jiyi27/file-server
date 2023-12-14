@@ -78,13 +78,15 @@ func (s *server) init() error {
 
 	// sort auth users by the depth of dir, the deepest dir depth at first.
 	sort.Slice(s.authUsers, func(i, j int) bool {
-		return PathDepth(s.authUsers[i].path) > PathDepth(s.authUsers[j].path)
+		return pathDepth(s.authUsers[i].path) > pathDepth(s.authUsers[j].path)
 	})
 
 	return nil
 }
 
 func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	log.Printf("A new request from %v, method: %v, request path:%v", r.Host, r.Method, r.URL.Path)
+
 	// hsts redirect.
 	if s.hsts && tryHsts(w, r) {
 		return
@@ -141,7 +143,7 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	authUser := s.getUserByPath(r.URL.Path)
+	authUser := s.retrieveUserByAuthPath(r.URL.Path)
 	// no path needs auth, handle request directly.
 	if authUser == nil {
 		s.taskDelegation(w, r)
@@ -161,7 +163,7 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	authUser.notifyAuth(w)
 }
 
-func (s *server) getUserByPath(path string) *user {
+func (s *server) retrieveUserByAuthPath(path string) *user {
 	for _, v := range s.authUsers {
 		// the deepest dir depth match first.
 		if strings.HasPrefix(path, v.path) {

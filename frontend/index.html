@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{{.PWD}}</title>
+    <title>{{.CurrentPath}}</title>
     <link rel="shortcut icon" type="image/x-icon" href="?asset=favicon.ico"/>
     <link rel="stylesheet" type="text/css" href="?asset=index.css"/>
     <script>
@@ -42,7 +42,7 @@
                     alert("successfully copied");
                 })
                 .catch(() => {
-                    alert("something went wrong");
+                    alert("something went wrong when trying to copy");
                 });
         }
     </script>
@@ -57,7 +57,7 @@
     <div class="dialog">
         <a href="#" class="close" onclick="closeDialog('upload')">&times;</a>
         <h2>Upload File</h2>
-        <form method="POST" action="{{.PWD}}?upload" enctype="multipart/form-data">
+        <form method="POST" action="{{.CurrentPath}}?upload" enctype="multipart/form-data">
             <input required name="file" type="file" multiple="multiple"/>
             <button type="submit">upload</button>
         </form>
@@ -68,7 +68,7 @@
     <div class="dialog">
         <a href="#" class="close" onclick="closeDialog('mkdir')">&times;</a>
         <h2>Create Folder</h2>
-        <form method="POST" action="{{.PWD}}?mkdir" enctype="application/x-www-form-urlencoded">
+        <form method="POST" action="{{.CurrentPath}}?mkdir" enctype="application/x-www-form-urlencoded">
             <input type="text" autocomplete="off" name="folder_name" placeholder="Folder Name" required/>
             <button type="submit">create</button>
         </form>
@@ -93,7 +93,7 @@
         <th style="width: 10%"></th>
     </tr>
     <tr>
-        <td style="font-size: 1.2em; font-weight: bold;"><a href="{{.ParentDirPath}}">{{if .IsRoot}}. /{{else}}. . /{{end}}</a></td>
+        <td style="font-size: 1.2em; font-weight: bold;"><a href="{{.ParentPath}}">{{if .IsRoot}}. /{{else}}. . /{{end}}</a></td>
     </tr>
     {{range .Files}}
     <tr>

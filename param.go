@@ -29,8 +29,8 @@ type Param struct {
 func (p *Param) init() {
 	var users usersFlag
 
-	flag.StringVar(&p.root, "root", "root/", "root directory for the file server")
-	flag.StringVar(&p.root, "r", "root/", "(alias for -root)")
+	flag.StringVar(&p.root, "root", "./root", "root directory for the file server")
+	flag.StringVar(&p.root, "r", "./root", "(alias for -root)")
 	flag.IntVar(&p.maxFileSize, "max", 32, "maximum size for single file uploads in MB")
 	flag.IntVar(&p.ListenPlain, "plain-port", 0, "plain http port the server listens on")
 	flag.IntVar(&p.ListenPlain, "p", 0, "(alias for -plain-port)")

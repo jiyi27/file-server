@@ -11,8 +11,7 @@ import (
 )
 
 func (s *server) taskDelegation(w http.ResponseWriter, r *http.Request) {
-	reqPath := formatPath(r.URL.Path)
-	filePath := filepath.Join(s.root, reqPath)
+	filePath := filepath.Join(s.root, r.URL.Path)
 	info, errStat := os.Stat(filePath)
 
 	switch {

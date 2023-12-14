@@ -12,6 +12,7 @@ import (
 )
 
 type file struct {
+	ID          string
 	Url         string
 	IsDir       bool
 	CanDelete   bool
@@ -21,33 +22,32 @@ type file struct {
 }
 
 type templateData struct {
-	IsRoot         bool
-	PWD            string // Current path
-	ParentDirPath  string
-	RootAssetsPath string
-	Files          []file
+	IsRoot      bool
+	CurrentPath string
+	ParentPath  string
+	AssetsDir   string
+	Files       []file
 }
 
 // getTemplateData generates template info under the current directory.
 func (s *server) getTemplateData(r *http.Request, files []os.FileInfo) templateData {
-	pwd := strings.TrimSuffix(r.URL.Path, "/")
-	parentDirPath := pwd
-	if !(pwd == "") {
-		parentDirPath = path.Dir(pwd)
+	r.URL.Path = strings.TrimSuffix(r.URL.Path, "/")
+	if r.URL.Path == "" {
+		r.URL.Path = "/"
 	}
 
 	data := templateData{
-		IsRoot:        pwd == "",
-		PWD:           pwd,
-		ParentDirPath: parentDirPath,
-		Files:         make([]file, 0),
+		IsRoot:      r.URL.Path == "/",
+		CurrentPath: r.URL.Path,
+		ParentPath:  path.Dir(r.URL.Path),
+		Files:       make([]file, 0),
 	}
 
 	for _, item := range files {
-		// init basic info of file entity.
 		filename := item.Name()
+		id := generateHash(path.Join(s.root, r.URL.Path, filename))
 		size := fileSizeBytes(item.Size()).String()
-		filePath := filepath.Join(pwd, filename)
+		filePath := filepath.Join(r.URL.Path, filename)
 		canDelete := true
 		isDir := false
 
@@ -56,7 +56,7 @@ func (s *server) getTemplateData(r *http.Request, files []os.FileInfo) templateD
 			isDir = true
 			// the full path of dir has a separator "/" at the end: path/to/dir/
 			filename += string(os.PathSeparator)
-			filePath = filepath.Join(pwd, filename)
+			filePath = filepath.Join(r.URL.Path, filename)
 			size = ""
 
 			// only empty dir can be deleted.
@@ -71,6 +71,7 @@ func (s *server) getTemplateData(r *http.Request, files []os.FileInfo) templateD
 		}
 
 		data.Files = append(data.Files, file{
+			ID:          id,
 			Url:         filePath,
 			IsDir:       isDir,
 			CanDelete:   canDelete,

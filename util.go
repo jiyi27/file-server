@@ -2,6 +2,8 @@ package main
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"mime"
@@ -41,8 +43,8 @@ func formatPath(path string) string {
 	return path
 }
 
-// PathDepth calculates the depth of a directory in the file path.
-func PathDepth(path string) int {
+// pathDepth calculates the depth of a directory in the file path.
+func pathDepth(path string) int {
 	if path == "/" {
 		return 0
 	}
@@ -93,4 +95,11 @@ func getAvailableName(fileDir, fileName string) string {
 	}
 	// no such file, use the original name.
 	return fileName
+}
+
+func generateHash(input string) string {
+	hasher := sha256.New()
+	hasher.Write([]byte(input))
+	hash := hasher.Sum(nil)
+	return hex.EncodeToString(hash) // 将哈希值转换为十六进制字符串
 }

@@ -23,7 +23,7 @@ func (s *server) handleDir(w http.ResponseWriter, r *http.Request, currentDir st
 		return err
 	}
 
-	// make directory appear before the file
+	// sort files, directories first, then sort by modified time.
 	sort.Slice(files, func(i, j int) bool {
 		if files[i].IsDir() && !files[j].IsDir() {
 			return true
@@ -137,6 +137,10 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request, currentDir
 
 			continue
 		}
+
+		// add file to the map
+		id := generateHash(dstPath)
+		s.filesIdToPath[id] = dstPath
 	}
 
 	return
