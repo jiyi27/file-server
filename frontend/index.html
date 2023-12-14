@@ -20,24 +20,9 @@
             return confirm('Confirm delete file\n' + name);
         }
 
-        async function getUrl(filepath) {
-            const url = "?filepath=" + filepath
-            let response = await fetch(url)
-            const body = await response.text()
-
-            if (!response.ok) {
-                alert(body)
-                return
-            }
-
-            const copyText = document.getElementById("shared-url")
-            copyText.value = body
-            showDialog('link')
-        }
-
-        function copyText() {
-            const copyText = document.getElementById("shared-url")
-            navigator.clipboard.writeText(copyText.value)
+        function copyText(file_id) {
+            const copyText = window.location.host + "/?file_id=" + file_id;
+            navigator.clipboard.writeText(copyText)
                 .then(() => {
                     alert("successfully copied");
                 })
@@ -75,15 +60,6 @@
     </div>
 </div>
 
-<div id="link-dialog" class="dialog-overlay">
-    <div class="dialog" style="height: 20%">
-        <a href="#" class="close" onclick="closeDialog('link')">&times;</a>
-        <h3>Create Share Link Successfully</h3>
-        <input id="shared-url">
-        <button onclick="copyText()">copy</button>
-    </div>
-</div>
-
 <table class="item-list">
     <tr>
         <th style="width: 40%">file</th>
@@ -109,7 +85,7 @@
         </td>
         <td>
             {{if not .IsDir}}
-            <button onclick="getUrl('{{.Url}}')">share</button>
+            <button onclick="copyText('{{.ID}}')">share</button>
             {{end}}
         </td>
     </tr>

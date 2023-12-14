@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path"
@@ -140,7 +141,7 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request, currentDir
 
 		// add file to the map
 		id := generateHash(dstPath)
-		s.filesIdToPath[id] = dstPath
+		s.files[id] = dstPath
 	}
 
 	return
@@ -166,9 +167,15 @@ func (s *server) handleDelete(w http.ResponseWriter, r *http.Request, filePath s
 }
 
 func (s *server) handleSharedDownload(w http.ResponseWriter, r *http.Request, id string) {
-	filePath, ok := s.filesIdToPath[id]
+	log.Println("download shared file:", id)
+	// loop through s.files and print out the key and value.
+	for k, v := range s.files {
+		log.Printf("key[%s] value[%s]\n", k, v)
+	}
+
+	filePath, ok := s.files[id]
 	if !ok {
-		s.handleError(w, r, http.StatusNotFound, "no such file")
+		s.handleError(w, r, http.StatusNotFound, "download shared file: no such file")
 		return
 	}
 

@@ -1,11 +1,11 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 )
@@ -16,15 +16,14 @@ func newServer(p *Param) {
 	hsts := p.ListenPlain != 0 && p.ListenTLS != 0
 
 	s := server{
-		theme:         newTheme(),
-		root:          p.root,
-		maxFileSize:   p.maxFileSize,
-		filesPathToId: make(map[string]string),
-		filesIdToPath: make(map[string]string),
-		hsts:          hsts,
-		hstsMaxAge:    "31536000",
-		toHttps:       toHttps,
-		authUsers:     p.users,
+		theme:       newTheme(),
+		root:        p.root,
+		maxFileSize: p.maxFileSize,
+		files:       make(map[string]string),
+		hsts:        hsts,
+		hstsMaxAge:  "31536000",
+		toHttps:     toHttps,
+		authUsers:   p.users,
 	}
 
 	// init server
@@ -56,16 +55,13 @@ type server struct {
 	theme *Theme
 
 	root        string
-	maxFileSize int // MB
+	maxFileSize int               // MB
+	files       map[string]string // key: file id, value: file path
 
 	hsts       bool // enable HSTS(HTTP Strict Transport Security).
 	hstsMaxAge string
-	toHttps    bool // redirect plain HTTP request to HTTPS TLS port.
-
-	filesPathToId map[string]string // used for file sharing
-	filesIdToPath map[string]string // used for file sharing
-
-	authUsers []user // username as index
+	toHttps    bool   // redirect plain HTTP request to HTTPS TLS port.
+	authUsers  []user // username as index
 }
 
 func (s *server) init() error {
@@ -79,6 +75,17 @@ func (s *server) init() error {
 	// sort auth users by the depth of dir, the deepest dir depth at first.
 	sort.Slice(s.authUsers, func(i, j int) bool {
 		return pathDepth(s.authUsers[i].path) > pathDepth(s.authUsers[j].path)
+	})
+
+	// loop through all files in root dir, generate file id and save to map.
+	err = filepath.Walk(s.root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return filepath.SkipDir
+		}
+		if !info.IsDir() {
+			s.files[generateHash(path)] = path
+		}
+		return nil
 	})
 
 	return nil
@@ -106,29 +113,10 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// handle download shared file.
-	const idPrefix = "shared_id="
+	const idPrefix = "file_id="
 	if strings.HasPrefix(r.URL.RawQuery, idPrefix) {
 		fileID := r.URL.Query()[strings.TrimSuffix(idPrefix, "=")][0]
 		s.handleSharedDownload(w, r, fileID)
-		return
-	}
-
-	// handle generate shared url of file.
-	const pathPrefix = "filepath="
-	if strings.HasPrefix(r.URL.RawQuery, pathPrefix) {
-		filePath := r.URL.Query()[strings.TrimSuffix(pathPrefix, "=")][0]
-		fullPath := s.root + formatPath(filePath)
-
-		url, err := s.generateSharedUrl(r, fullPath)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusNotFound)
-			return
-		}
-
-		if _, err = fmt.Fprint(w, url); err != nil {
-			log.Printf("failed to send shared file link to client: %v", err)
-			return
-		}
 		return
 	}
 
@@ -179,31 +167,6 @@ func (s *server) asset(w http.ResponseWriter, r *http.Request, assetName string)
 	header.Set("Cache-Control", "public, max-age=3600")
 
 	s.theme.RenderAsset(w, r, assetName)
-}
-
-// generateSharedUrl generates a link for the file and add its id and path to a map.
-func (s *server) generateSharedUrl(r *http.Request, filePath string) (string, error) {
-	info, err := os.Stat(filePath)
-	if err != nil {
-		return "", fmt.Errorf("failed to generate shared url: %v", err)
-	}
-
-	if info.IsDir() {
-		return "", errors.New("directory cannot be shared")
-	}
-
-	id, ok := s.filesPathToId[filePath]
-	if !ok {
-		id, err = s.generateID(10)
-		if err != nil {
-			return "", fmt.Errorf("failed to generate shared url: %v", err)
-		}
-
-		s.filesIdToPath[id] = filePath
-		s.filesPathToId[filePath] = id
-	}
-
-	return fmt.Sprintf("%v://%v?shared_id=%v", getScheme(r), r.Host, id), nil
 }
 
 func (s *server) handleError(w http.ResponseWriter, _ *http.Request, status int, msg string) {

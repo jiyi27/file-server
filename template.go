@@ -84,22 +84,6 @@ func (s *server) getTemplateData(r *http.Request, files []os.FileInfo) templateD
 	return data
 }
 
-func (s *server) generateID(n int) (string, error) {
-	for {
-		id, err := randomString(n)
-		if err != nil {
-			return "", fmt.Errorf("failed to generate file ID: %v", err)
-		}
-
-		_, ok := s.filesPathToId[id]
-		if ok {
-			continue
-		}
-
-		return id, err
-	}
-}
-
 type fileSizeBytes float64
 
 func (f fileSizeBytes) String() string {
