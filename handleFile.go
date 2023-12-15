@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -68,8 +69,7 @@ func (s *server) handleMkdir(w http.ResponseWriter, r *http.Request, currentDir 
 
 func (s *server) handleUpload(w http.ResponseWriter, r *http.Request, currentDir string) (errs []uploadError) {
 	// limit the size of incoming request bodies.
-	maxFileSize := int64(s.maxFileSize * 1024 * 1024)
-	r.Body = http.MaxBytesReader(w, r.Body, maxFileSize)
+	r.Body = &LimitedReader{r: r.Body, n: int64(s.maxFileSize * 1024 * 1024)}
 
 	reader, err := r.MultipartReader()
 	if err != nil {
@@ -117,10 +117,10 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request, currentDir
 			_ = os.Remove(dstPath)
 
 			// file too large, stop uploading
-			if err.Error() == "http: request body too large" {
+			var er *FileToLarge
+			if errors.As(err, &er) {
 				return
 			}
-
 			continue
 		}
 
