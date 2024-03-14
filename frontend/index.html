@@ -21,7 +21,7 @@
         }
 
         function copyText(file_id) {
-            const copyText = window.location.host + "/?file_id=" + file_id;
+            const copyText = "https://" + window.location.host + "?file_id=" + file_id;
             navigator.clipboard.writeText(copyText)
                 .then(() => {
                     alert("successfully copied");
