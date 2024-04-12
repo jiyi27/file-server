@@ -19,6 +19,7 @@ func (s *server) handleDir(w http.ResponseWriter, r *http.Request, currentDir st
 	if err != nil {
 		return err
 	}
+	defer d.Close()
 
 	files, err := d.Readdir(-1)
 	if err != nil {
@@ -67,7 +68,7 @@ func (s *server) handleMkdir(w http.ResponseWriter, r *http.Request, currentDir 
 	return nil, http.StatusOK
 }
 
-func (s *server) handleUpload(w http.ResponseWriter, r *http.Request, currentDir string) (errs []uploadError) {
+func (s *server) handleUpload(_ http.ResponseWriter, r *http.Request, currentDir string) (errs []uploadError) {
 	// limit the size of incoming request bodies.
 	r.Body = &LimitedReader{r: r.Body, n: int64(s.maxFileSize * 1024 * 1024)}
 
@@ -84,7 +85,15 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request, currentDir
 			if err == io.EOF { // finish reading all parts, exit the loop
 				break
 			}
+
 			errs = append(errs, uploadError{Message: fmt.Sprintf("reader.NextPart(): %v", err)})
+
+			// too many errors, stop uploading, you must limit the number of errors in case of infinite loop.
+			if len(errs) >= 10 {
+				errs = append(errs, uploadError{Message: "Maximum error limit reached"})
+				return
+			}
+
 			continue
 		}
 
