@@ -156,6 +156,32 @@ func (s *server) handleUpload(_ http.ResponseWriter, r *http.Request, currentDir
 	return
 }
 
+func (s *server) handleUploadLargeFile(w http.ResponseWriter, r *http.Request, currentDir string) *uploadError {
+	filename := r.Header.Get("X-Filename")
+	if filename == "" {
+		return &uploadError{Message: "Filename is required in X-Filename header"}
+	}
+
+	filename = getAvailableName(currentDir, filename)
+
+	dstPath := filepath.Join(currentDir, filename)
+	dst, err := os.Create(dstPath)
+	if err != nil {
+		return &uploadError{Message: fmt.Sprintf("create file: %v", err)}
+	}
+
+	_, err = io.Copy(dst, r.Body)
+	if err != nil {
+		_ = dst.Close()
+		_ = os.Remove(dstPath)
+		return &uploadError{Message: fmt.Sprintf("copy file: %v", err)}
+	}
+
+	id := generateHash(dstPath)
+	s.files[id] = dstPath
+	return nil
+}
+
 func (s *server) handleDelete(w http.ResponseWriter, r *http.Request, filePath string) error {
 	// remove removes the named file or (empty) directory.
 	err := os.Remove(filePath)

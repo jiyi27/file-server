@@ -33,6 +33,17 @@ func (s *server) taskDelegation(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 			_ = json.NewEncoder(w).Encode(errs)
 		}
+	case info.IsDir() && strings.HasPrefix(r.URL.RawQuery, "large-file-upload"):
+		err := s.handleUploadLargeFile(w, r, filePath)
+		if err != nil {
+			w.Header().Set("Content-Type", "application/json; charset=utf-8")
+			w.WriteHeader(http.StatusInternalServerError)
+			_ = json.NewEncoder(w).Encode(err)
+		} else {
+			r.URL.RawQuery = ""
+			w.Header().Set("Location", r.URL.String())
+			w.WriteHeader(http.StatusSeeOther)
+		}
 	case info.IsDir() && strings.HasPrefix(r.URL.RawQuery, "mkdir"):
 		err, status := s.handleMkdir(w, r, filePath)
 		if err != nil {

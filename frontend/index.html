@@ -30,17 +30,47 @@
                     alert("something went wrong when trying to copy");
                 });
         }
+
+        function uploadLargeFile(url) {
+            const fileInput = document.getElementById('large-file');
+            const file = fileInput.files[0];
+            const xhr = new XMLHttpRequest();
+            xhr.open('PUT', url, true);
+            xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+            xhr.setRequestHeader('X-Filename', encodeURIComponent(file.name));
+
+            xhr.onload = function() {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    location.reload();
+                } else {
+                    console.error('Upload failed:', xhr.statusText);
+                    try {
+                        const respJson = JSON.parse(xhr.responseText);
+                        console.log('Error details:', respJson);
+                    } catch (e) {
+
+                    }
+                }
+            };
+
+            xhr.onerror = function() {
+                console.error('Upload error:', xhr.statusText);
+            };
+
+            xhr.send(file);
+        }
     </script>
 </head>
 <body>
 <ul class="menu">
-    <li><a href="#" onclick="showDialog('upload')">Upload File</a></li>
+    <li><a href="#" onclick="showDialog('upload-file')">Upload File</a></li>
+    <li><a href="#" onclick="showDialog('upload-large-file')">Upload Large File</a></li>
     <li><a href="#" onclick="showDialog('mkdir')" style="margin-left: 1.5em;">Create Folder</a></li>
 </ul>
 
-<div id="upload-dialog" class="dialog-overlay">
+<div id="upload-file-dialog" class="dialog-overlay">
     <div class="dialog">
-        <a href="#" class="close" onclick="closeDialog('upload')">&times;</a>
+        <a href="#" class="close" onclick="closeDialog('upload-file')">&times;</a>
         <h2>Upload File</h2>
         <form method="POST" action="{{.CurrentPath}}?upload" enctype="multipart/form-data">
             <input required name="file" type="file" multiple="multiple"/>
@@ -49,12 +79,23 @@
     </div>
 </div>
 
+<div id="upload-large-file-dialog" class="dialog-overlay">
+    <div class="dialog">
+        <a href="#" class="close" onclick="closeDialog('upload-large-file')">&times;</a>
+        <h2>Upload Large File</h2>
+        <input required type="file" id="large-file" />
+        <button onclick="uploadLargeFile('{{.CurrentPath}}?large-file-upload')">upload</button>
+    </div>
+</div>
+
 <div id="mkdir-dialog" class="dialog-overlay">
     <div class="dialog">
         <a href="#" class="close" onclick="closeDialog('mkdir')">&times;</a>
         <h2>Create Folder</h2>
         <form method="POST" action="{{.CurrentPath}}?mkdir" enctype="application/x-www-form-urlencoded">
-            <input type="text" autocomplete="off" name="folder_name" placeholder="Folder Name" required/>
+            <label>
+                <input type="text" autocomplete="off" name="folder_name" placeholder="Folder Name" required/>
+            </label>
             <button type="submit">create</button>
         </form>
     </div>
