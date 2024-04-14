@@ -156,7 +156,7 @@ func (s *server) handleUpload(_ http.ResponseWriter, r *http.Request, currentDir
 	return
 }
 
-func (s *server) handleUploadLargeFile(w http.ResponseWriter, r *http.Request, currentDir string) *uploadError {
+func (s *server) handleUploadLargeFile(_ http.ResponseWriter, r *http.Request, currentDir string) *uploadError {
 	filename := r.Header.Get("X-Filename")
 	if filename == "" {
 		return &uploadError{Message: "Filename is required in X-Filename header"}

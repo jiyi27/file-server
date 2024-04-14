@@ -35,7 +35,7 @@
             const fileInput = document.getElementById('large-file');
             const file = fileInput.files[0];
             const xhr = new XMLHttpRequest();
-            xhr.open('PUT', url, true);
+            xhr.open('POST', url, true);
             xhr.setRequestHeader('Content-Type', 'application/octet-stream');
             xhr.setRequestHeader('X-Filename', encodeURIComponent(file.name));
 
