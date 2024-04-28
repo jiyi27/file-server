@@ -61,6 +61,7 @@ func (s *server) taskDelegation(w http.ResponseWriter, r *http.Request) {
 			s.handleError(w, r, http.StatusInternalServerError, err.Error())
 		}
 	default:
+		// strconv.Quote ensures the filename can be handled safely because of special characters.
 		w.Header().Set("Content-Disposition", "attachment; filename="+strconv.Quote(info.Name()))
 		w.Header().Set("Content-Type", "application/octet-stream")
 		http.ServeFile(w, r, filePath)
