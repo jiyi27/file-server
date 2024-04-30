@@ -4,6 +4,8 @@
 *.iml
 *.ipr
 
+_output/
+
 ### VS Code ###
 .vscode/
 
