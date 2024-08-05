@@ -68,35 +68,32 @@ Another complicated example:
 - Requires authentication for url `/aaa/bbb`
   - username: `user2`, password: `user2pw`
 
-
 ```shell
-$./server -auth /abc:user1:user1pw -auth /aaa/bbb:user2:user2pw -plain-port 80 -tls-port 443 -ssl-cert ./conf/cert.pem -ssl-key ./conf/cert.key
+$./server -auth /abc:user1:user1pw -auth /aaa/bbb:user2:user2pw -http 80 -https 443 -ssl-cert ./conf/cert.pem -ssl-key ./conf/cert.key
 ```
 
 ## Usage
 
 ```shell
-❯ ./server -h                                                                                                                      
+❯ ./server -h
 Usage of ./server:
-  -auth value
+    -auth value
         -auth <path:username:password>
-        specify user for HTTP Basic Auth
-  -max int
-        maximum size for single file uploads in MB (default 32)
-  -p int
-        (alias for -plain-port)
-  -plain-port int
-        plain http port the server listens on
-  -r string
-        (alias for -root) (default "root/")
-  -root string
-        root directory for the file server (default "root/")
-  -ssl-cert string
-        path to SSL server certificate
-  -ssl-key string
-        path to SSL private key
-  -tls-port int
-        tls port the server listens on, will fail if cert or key is not specified
+        example: /:admin:adminpw
+    -http int
+        Enable HTTP server on the specified port, default is 80
+    -https int
+        Enable HTTPS server on the specified port, default is 443
+    -max int
+        Specify maximum size for single file uploads in MB (default 32)
+    -r string
+        (alias for -root) (default "./root")
+    -root string
+        Specify the root directory to save files (default "./root")
+    -ssl-cert string
+        Specify the path of SSL certificate
+    -ssl-key string
+        Specify the path of SSL private key
 ```
 
 ## Acknowledgments
