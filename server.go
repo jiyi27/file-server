@@ -11,43 +11,31 @@ import (
 )
 
 func newServer(p *Param) {
-	toHttps := p.ListenTLS != 0
-	// only available if server listens both plain HTTP and TLS on standard ports.
-	hsts := p.ListenPlain != 0 && p.ListenTLS != 0
-
 	s := server{
 		theme:       newTheme(),
 		root:        p.root,
 		maxFileSize: p.maxFileSize,
 		files:       make(map[string]string),
-		hsts:        hsts,
+		hsts:        p.Http != 0 && p.Https != 0,
 		hstsMaxAge:  "31536000",
-		toHttps:     toHttps,
+		toHttps:     p.Https != 0,
 		authUsers:   p.users,
 	}
 
-	// init server
 	if err := s.init(); err != nil {
 		log.Fatal(err)
 	}
 
 	switch {
-	case p.ListenPlain != 0 && p.ListenTLS == 0: // only plain http
-		log.Printf("listening http on %v", p.ListenPlain)
-		log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", p.ListenPlain), &s))
-	case p.ListenPlain == 0 && p.ListenTLS != 0: // only tls
-		log.Printf("listening tls on %v", p.ListenTLS)
-		log.Fatal(http.ListenAndServeTLS(fmt.Sprintf(":%v", p.ListenTLS), p.TLSCert, p.TLSKey, &s))
-	case p.ListenPlain != 0 && p.ListenTLS != 0: // both tls and plain http
-		go func() {
-			log.Printf("listening http on %v", p.ListenPlain)
-			log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", p.ListenPlain), &s))
-		}()
-		log.Printf("listening tls on %v", p.ListenTLS)
-		log.Fatal(http.ListenAndServeTLS(fmt.Sprintf(":%v", p.ListenTLS), p.TLSCert, p.TLSKey, &s))
-	default: // listen plain http on 80 port by default
-		log.Printf("listening http on %s", ":8080")
-		log.Fatal(http.ListenAndServe(":8080", &s))
+	case p.Http == 0 && p.Https == 0: // no port specified, default http on 80
+		serveHTTP(80, &s)
+	case p.Http != 0 && p.Https == 0: // only plain http
+		serveHTTP(p.Http, &s)
+	case p.Http == 0 && p.Https != 0: // only https
+		serveHTTPS(p.Https, p.SSLCert, p.SSLKey, &s)
+	case p.Http != 0 && p.Https != 0: // both https and plain http
+		go serveHTTP(p.Http, &s)
+		serveHTTPS(p.Https, p.SSLCert, p.SSLKey, &s)
 	}
 }
 

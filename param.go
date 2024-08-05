@@ -20,32 +20,33 @@ type Param struct {
 
 	users []user
 
-	TLSKey      string
-	TLSCert     string
-	ListenPlain int
-	ListenTLS   int
+	Http    int
+	Https   int
+	SSLKey  string
+	SSLCert string
 }
 
 func (p *Param) init() {
 	var users usersFlag
 
-	flag.StringVar(&p.root, "root", "./root", "root directory for the file server")
-	flag.StringVar(&p.root, "r", "./root", "(alias for -root)")
-	flag.IntVar(&p.maxFileSize, "max", 32, "maximum size for single file uploads in MB")
-	flag.IntVar(&p.ListenPlain, "plain-port", 0, "plain http port the server listens on")
-	flag.IntVar(&p.ListenPlain, "p", 0, "(alias for -plain-port)")
-	flag.IntVar(&p.ListenTLS, "tls-port", 0, "tls port the server listens on, will fail if cert or key is not specified")
-	flag.StringVar(&p.TLSCert, "ssl-cert", "", "path to SSL server certificate")
-	flag.StringVar(&p.TLSKey, "ssl-key", "", "path to SSL private key")
 	flag.Var(&users, "auth", fmt.Sprintf("-auth <path:username:password>\n"+
-		"specify user for HTTP Basic Auth"))
+		"example: /:admin:adminpw"))
+
+	flag.StringVar(&p.root, "root", "./root", "Specify the root directory to save files")
+	flag.StringVar(&p.root, "r", "./root", "(alias for -root)")
+	flag.IntVar(&p.maxFileSize, "max", 32, "Specify maximum size for single file uploads in MB")
+
+	flag.IntVar(&p.Http, "http", 0, "Enable HTTP server on the specified port, default is 80")
+	flag.IntVar(&p.Https, "https", 0, "Enable HTTPS server on the specified port, default is 443")
+	flag.StringVar(&p.SSLCert, "ssl-cert", "", "Specify the path of SSL certificate")
+	flag.StringVar(&p.SSLKey, "ssl-key", "", "Specify the path of SSL private key")
 
 	flag.Parse()
 
-	// valid tls
-	if p.ListenTLS != 0 {
-		if p.TLSCert == "" || p.TLSKey == "" {
-			log.Fatal("if tls-port is specified, tls-key and tls-cert must be specified")
+	// valid ssl
+	if p.Https != 0 {
+		if p.SSLCert == "" || p.SSLKey == "" {
+			log.Fatal("HTTPS needs both ssl key and ssl cert to work")
 		}
 	}
 
