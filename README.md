@@ -30,20 +30,20 @@ Will generate executable file "server" in current directory.
 Start server on port 8080, root directory is `root/` under the project:
 
 ```shell
-nohup ./server -p 8080 &
+nohup ./server -http 8080 &
 ```
 > `nohup` detaches the process from the terminal and redirects its output to nohup.out
 
 Start server on port 8080, root directory is /usr/share/doc:
 
 ```shell
-./server -p 8080 -r /usr/share/doc
+./server -http 8080 -r /usr/share/doc
 ```
 
 Start server on port 80 and 443, 80 serves for plain HTTP, 443 serves for HTTPS:
 
 ```shell
-$ ./server -p 80 -tls-port 443 -ssl-cert ~/tls/server.crt -ssl-key ~/tls/server.key
+$ ./server -http 80 -https 443 -ssl-cert ~/tls/server.crt -ssl-key ~/tls/server.key
 ```
 
 For generating TLS Certificate, please refer to: https://gist.github.com/denji/12b3a568f092ab951456
@@ -54,9 +54,9 @@ Http Basic Auth:
 - Require authentication for accessing all files
 
 ```shell
-./server -p 8080 -auth :admin:adminpw
+./server -http 8080 -auth :admin:adminpw
 # or
-./server -p 8080 -auth /:admin:adminpw
+./server -http 8080 -auth /:admin:adminpw
 ```
 
 Another complicated example:
