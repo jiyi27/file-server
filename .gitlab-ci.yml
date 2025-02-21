@@ -16,6 +16,10 @@ build_job:
       - file_server  # 保存二进制文件
     expire_in: 1 day  # 延长保留时间，避免重新编译
 
+# 如果你只需要执行一些简单的 Linux 命令（如部署） → 用 alpine:latest（更轻量）
+# 如果你需要执行复杂的操作（如编译、打包） → 用 golang:alpine（包含了 Go 编译环境）
+# 构建阶段我们用的是 golang:alpine 镜像，因为我们需要编译 Go 项目
+# 部署阶段我们用的是 alpine:latest 镜像，因为我们只需要执行一些简单的 Linux 命令
 deploy_job:
   stage: deploy
   image: alpine:latest
