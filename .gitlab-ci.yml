@@ -34,7 +34,7 @@ deploy_job:
   script:
     - echo "Deploying to server..."
     # 先关闭已有进程，不然文件被占用无法覆盖
-    - ssh root@38.174.113.21 "pkill -f 'file_server -auth' || true"
+    - ssh root@38.174.113.217 "pkill -f 'file_server -auth' || true"
     - scp file_server root@38.174.113.217:/root/file_server/file_server
     - |
       ssh root@38.174.113.217 << 'EOF'
