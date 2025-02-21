@@ -34,6 +34,10 @@ deploy_job:
     - echo "Deploying to server..."
 
     # 1) 生成一个脚本 kill_file_server.sh (在CI Runner本地)
+    # 用于关闭正在运行的 file_server 进程,
+    # 注意这里生成脚本是在 CI Runner 本地生成的, 然后通过 scp 上传到服务器, 最后在服务器上执行
+    # 之所以这样做是为了避免 直接执行 ssh root@server "pkill -f 'file_server -auth'" 时
+    # 可能会误杀其他进程, 比如 ssh 本身, 导致断联, 后面的命令无法继续
     - |
       cat > kill_file_server.sh <<'EOF'
       #!/usr/bin/env sh
