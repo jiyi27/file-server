@@ -11,7 +11,6 @@ build_job:
     - apk add --no-cache musl-dev  # 确保 musl 依赖可用
     # -ldflags "-s -w" -s 去掉符号表，-w 去掉调试信息，可以减小二进制文件大小
     - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o file_server ./
-    - file file_server  # 确保是静态编译
   artifacts:
     paths:
       - file_server  # 保存二进制文件
