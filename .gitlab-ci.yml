@@ -33,11 +33,12 @@ deploy_job:
     - ssh-keyscan -H 38.174.113.217 >> ~/.ssh/known_hosts
   script:
     - echo "Deploying to server..."
+    # 先关闭已有进程，不然文件被占用无法覆盖
+    - ssh root@38.174.113.21 "pkill -f 'file_server -auth' || true"
     - scp file_server root@38.174.113.217:/root/file_server/file_server
     - |
       ssh root@38.174.113.217 << 'EOF'
         cd /root/file_server
-        pkill -f "file_server -auth" || true
         nohup ./file_server -auth :1132:1132 -http 80 -https 443 \
              -ssl-key ../tls/cert.key -ssl-cert ../tls/cert.pem &
         exit
