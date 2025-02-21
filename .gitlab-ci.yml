@@ -5,14 +5,17 @@ stages:
 # 编译阶段
 build_job:
   stage: build
-  image: golang:latest  # 使用官方 Go 镜像
+  image: golang:alpine  # 使用更小的 Alpine 镜像
   script:
     - echo "Building Go project..."
-    - go build -o file_server ./  # 编译生成 file_server
+    - apk add --no-cache musl-dev  # 确保 musl 依赖可用
+    # -ldflags "-s -w" -s 去掉符号表，-w 去掉调试信息，可以减小二进制文件大小
+    - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o file_server ./
+    - file file_server  # 确保是静态编译
   artifacts:
     paths:
-      - file_server  # 保存编译好的二进制文件供后续使用
-    expire_in: 1 hour  # artifacts 保留 1 小时
+      - file_server  # 保存二进制文件
+    expire_in: 1 day  # 延长保留时间，避免重新编译
 
 # 部署阶段
 deploy_job:
@@ -21,16 +24,14 @@ deploy_job:
   before_script:
     - apk add --no-cache openssh-client
     - mkdir -p ~/.ssh
-    - echo "$SSH_PRIVATE_KEY" | cat -A   # 先看一下到底拿到的是什么（仅测试阶段，不要在生产里直接打印私钥）
-    - echo "$SSH_PRIVATE_KEY_BASE64" | base64 -d > ~/.ssh/id_ed25519
-    - cat -A ~/.ssh/id_ed25519          # 再看一下最终写入文件里是什么
+    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519 # 变量不要设置为 Protect variable, 否则无法在脚本中使用
     - chmod 600 ~/.ssh/id_ed25519
     - ssh-keyscan -H 38.174.113.217 >> ~/.ssh/known_hosts
   script:
     - echo "Deploying to server..."
-    - scp -i ~/.ssh/id_ed25519 file_server root@38.174.113.217:/root/file_server/file_server
+    - scp file_server root@38.174.113.217:/root/file_server/file_server
     - |
-      ssh -i ~/.ssh/id_ed25519 root@38.174.113.217 << 'EOF'
+      ssh root@38.174.113.217 << 'EOF'
         cd /root/file_server
         pkill -f "file_server -auth" || true
         nohup ./file_server -auth :1132:1132 -http 80 -https 443 \
