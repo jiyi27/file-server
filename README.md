@@ -20,33 +20,18 @@ In real development environment, file transfer can be an issue, because there ar
 ## Compile
 
 ```shell
-$ go build -o server
+$ go build -o file_server ./
 ```
-
-Will generate executable file "server" in current directory.
 
 ## Examples
 
-Start server on port 8080, root directory is `root/` under the project:
+Start server on port 8080, all the files will be saved in the `./root` directory by default:
 
 ```shell
 nohup ./server -http 8080 &
 ```
+
 > `nohup` detaches the process from the terminal and redirects its output to nohup.out
-
-Start server on port 8080, root directory is /usr/share/doc:
-
-```shell
-./server -http 8080 -r /usr/share/doc
-```
-
-Start server on port 80 and 443, 80 serves for plain HTTP, 443 serves for HTTPS:
-
-```shell
-$ ./server -http 80 -https 443 -ssl-cert ~/tls/server.crt -ssl-key ~/tls/server.key
-```
-
-For generating TLS Certificate, please refer to: https://gist.github.com/denji/12b3a568f092ab951456
 
 Http Basic Auth:
 
@@ -70,6 +55,12 @@ Another complicated example:
 
 ```shell
 $./server -auth /abc:user1:user1pw -auth /aaa/bbb:user2:user2pw -http 80 -https 443 -ssl-cert ./conf/cert.pem -ssl-key ./conf/cert.key
+```
+
+Start server on port 80 and 443, with SSL enabled, and authentication required for all files, username: `1132`, password: `1132`, and save the log to `nohup.out`, ssl certificate and key are in the `../tls` directory:
+
+```shell
+nohup ./file_server -auth :1132:1132 -http 80 -https 443 -ssl-key ../tls/cert.key -ssl-cert ../tls/cert.pem &
 ```
 
 ## Usage
