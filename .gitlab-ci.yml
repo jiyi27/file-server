@@ -1,0 +1,40 @@
+stages:
+  - build
+  - deploy
+
+# 编译阶段
+build_job:
+  stage: build
+  image: golang:latest  # 使用官方 Go 镜像
+  script:
+    - echo "Building Go project..."
+    - go build -o file_server main.go  # 编译生成 file_server
+  artifacts:
+    paths:
+      - file_server  # 保存编译好的二进制文件供后续使用
+    expire_in: 1 hour  # artifacts 保留 1 小时
+
+# 部署阶段
+deploy_job:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client
+    - mkdir -p ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-keyscan -H 38.174.113.217 >> ~/.ssh/known_hosts
+  script:
+    - echo "Deploying to server..."
+    - scp file_server root@38.174.113.217:/root/file_server/file_server
+    - |
+      ssh root@38.174.113.217 << 'EOF'
+        cd /root/file_server
+        pkill -f "file_server -auth" || true
+        nohup ./file_server -auth :1132:1132 -http 80 -https 443 \
+              -ssl-key ../tls/cert.key -ssl-cert ../tls/cert.pem &
+        exit
+      EOF
+
+  only:
+    - main
