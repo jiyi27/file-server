@@ -34,10 +34,10 @@ deploy_job:
   script:
     - echo "Deploying to server..."
     # 先关闭已有进程，不然文件被占用无法覆盖
-    - ssh root@38.174.113.217 "pkill -f 'file_server -auth' || true"
-    - scp file_server root@38.174.113.217:/root/file_server/file_server
+    - ssh -i ~/.ssh/id_ed25519 root@38.174.113.217 "pkill -f 'file_server -auth' || true"
+    - scp i ~/.ssh/id_ed25519 file_server root@38.174.113.217:/root/file_server/file_server
     - |
-      ssh root@38.174.113.217 << 'EOF'
+      ssh -i ~/.ssh/id_ed25519 root@38.174.113.217 << 'EOF'
         cd /root/file_server
         nohup ./file_server -auth :1132:1132 -http 80 -https 443 \
              -ssl-key ../tls/cert.key -ssl-cert ../tls/cert.pem &
