@@ -24,14 +24,15 @@ deploy_job:
     - apk add --no-cache openssh-client
     - mkdir -p ~/.ssh
     # CD/CI 变量不要设置为 Protect variable, 否则无法在脚本中使用
-    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+    # - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+    - echo "$SSH_PRIVATE_KEY_BASE64" | base64 -d > ~/.ssh/id_ed25519
     - chmod 600 ~/.ssh/id_ed25519
     - ssh-keyscan -H 38.174.113.217 >> ~/.ssh/known_hosts
   script:
     - echo "Deploying to server..."
-    - scp -i ~/.ssh/id_ed25519 file_server root@38.174.113.217:/root/file_server/file_server
+    - scp file_server root@38.174.113.217:/root/file_server/file_server
     - |
-      ssh -i ~/.ssh/id_ed25519 root@38.174.113.217 << 'EOF'
+      ssh root@38.174.113.217 << 'EOF'
         cd /root/file_server
         pkill -f "file_server -auth" || true
         nohup ./file_server -auth :1132:1132 -http 80 -https 443 \
