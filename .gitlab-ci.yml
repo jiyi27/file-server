@@ -32,7 +32,18 @@ deploy_job:
     - chmod 600 ~/.ssh/id_ed25519
     - ssh-keyscan -H 38.174.113.217 >> ~/.ssh/known_hosts
   script:
-    - ssh -v root@38.174.113.217 "echo 'SSH works'"
+    - echo "Deploying to server..."
+    # - ssh -v -i ~/.ssh/id_ed25519 root@38.174.113.217 "echo 'SSH works'"
+    # 先关闭已有进程，不然文件被占用无法覆盖
+    - ssh root@38.174.113.217 "pgrep -f 'file_server -auth' && pkill -f 'file_server -auth' || echo 'No process found'"
+    - scp file_server root@38.174.113.217:/root/file_server/file_server
+    - |
+      ssh root@38.174.113.217 << 'EOF'
+        cd /root/file_server
+        nohup ./file_server -auth :1132:1132 -http 80 -https 443 \
+             -ssl-key ../tls/cert.key -ssl-cert ../tls/cert.pem &
+        exit
+      EOF
 
   only:
     - master  # 只有 master 分支的提交才会触发部署
