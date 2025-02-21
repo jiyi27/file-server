@@ -8,7 +8,7 @@ build_job:
   image: golang:latest  # 使用官方 Go 镜像
   script:
     - echo "Building Go project..."
-    - go build -o file_server main.go  # 编译生成 file_server
+    - go build -o file_server ./  # 编译生成 file_server
   artifacts:
     paths:
       - file_server  # 保存编译好的二进制文件供后续使用
