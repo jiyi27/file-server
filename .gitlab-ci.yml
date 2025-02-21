@@ -50,18 +50,18 @@ deploy_job:
       EOF
 
     # 2) 上传脚本到服务器
-    - scp -i ~/.ssh/id_ed25519 kill_file_server.sh root@38.174.113.217:/root/kill_file_server.sh
+    - scp kill_file_server.sh root@38.174.113.217:/root/kill_file_server.sh
 
     # 3) 在服务器上赋予脚本可执行权限并执行它
-    - ssh -i ~/.ssh/id_ed25519 root@38.174.113.217 "chmod +x /root/kill_file_server.sh"
-    - ssh -i ~/.ssh/id_ed25519 root@38.174.113.217 "/root/kill_file_server.sh"
+    - ssh root@38.174.113.217 "chmod +x /root/kill_file_server.sh"
+    - ssh root@38.174.113.217 "/root/kill_file_server.sh"
 
     # 4) 上传新的 file_server 程序
-    - scp -i ~/.ssh/id_ed25519 file_server root@38.174.113.217:/root/file_server/file_server
+    - scp file_server root@38.174.113.217:/root/file_server/file_server
 
     # 5) 启动新进程
     - |
-      ssh -i ~/.ssh/id_ed25519 root@38.174.113.217 << 'EOF'
+      ssh root@38.174.113.217 << 'EOF'
         cd /root/file_server
         chmod +x file_server
         echo "Starting file_server..."
