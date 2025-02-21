@@ -21,7 +21,9 @@ deploy_job:
   before_script:
     - apk add --no-cache openssh-client
     - mkdir -p ~/.ssh
-    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+    - echo "$SSH_PRIVATE_KEY" | cat -A   # 先看一下到底拿到的是什么（仅测试阶段，不要在生产里直接打印私钥）
+    - echo "$SSH_PRIVATE_KEY_BASE64" | base64 -d > ~/.ssh/id_ed25519
+    - cat -A ~/.ssh/id_ed25519          # 再看一下最终写入文件里是什么
     - chmod 600 ~/.ssh/id_ed25519
     - ssh-keyscan -H 38.174.113.217 >> ~/.ssh/known_hosts
   script:
