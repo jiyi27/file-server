@@ -1,49 +1,41 @@
-stages:
-  - build
-  - deploy
-
-# 编译阶段
-build_job:
-  stage: build
-  image: golang:alpine  # 使用更小的 Alpine 镜像
-  script:
-    - echo "Building Go project..."
-    - apk add --no-cache musl-dev  # 确保 musl 依赖可用
-    # -ldflags "-s -w" -s 去掉符号表，-w 去掉调试信息，可以减小二进制文件大小
-    - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o file_server ./
-  artifacts:
-    paths:
-      - file_server  # 保存二进制文件
-    expire_in: 1 day  # 延长保留时间，避免重新编译
-
-# 部署阶段
 deploy_job:
   stage: deploy
   image: alpine:latest
   before_script:
     - apk add --no-cache openssh-client
     - mkdir -p ~/.ssh
-    # CD/CI 变量不要设置为 Protect variable, 否则无法在脚本中使用
-    # 直接使用变量可能会导致换行符被转义，所以在本地不要直接复制私钥然后拷贝到变量中
-    # 应该使用指令 $ cat id_ed25519 | base64
-    # id_ed25519 是私钥文件名，需要根据实际情况修改, 然后将输出的 base64 字符串复制到变量 SSH_PRIVATE_KEY_BASE64 中
-    # 然后通过指令 echo "$SSH_PRIVATE_KEY_BASE64" | base64 -d > ~/.ssh/id_ed25519 还原私钥文件
     - echo "$SSH_PRIVATE_KEY_BASE64" | base64 -d > ~/.ssh/id_ed25519
     - chmod 600 ~/.ssh/id_ed25519
     - ssh-keyscan -H 38.174.113.217 >> ~/.ssh/known_hosts
   script:
     - echo "Deploying to server..."
-    # - ssh -v -i ~/.ssh/id_ed25519 root@38.174.113.217 "echo 'SSH works'"
-    # 先关闭已有进程，不然文件被占用无法覆盖
-    - ssh root@38.174.113.217 "pgrep -f 'file_server -auth' && pkill -f 'file_server -auth' || echo 'No process found'"
-    - scp file_server root@38.174.113.217:/root/file_server/file_server
+
+    # 1) 生成一个脚本 kill_file_server.sh (在CI Runner本地)
     - |
-      ssh root@38.174.113.217 << 'EOF'
+      cat > kill_file_server.sh <<'EOF'
+      #!/usr/bin/env sh
+      # 避免用 -f 导致误杀，或者至少要更精准地匹配
+      pkill -f 'file_server -auth' || echo "No process found"
+      EOF
+
+    # 2) 上传脚本到服务器
+    - scp -i ~/.ssh/id_ed25519 kill_file_server.sh root@38.174.113.217:/root/kill_file_server.sh
+
+    # 3) 在服务器上赋予脚本可执行权限并执行它
+    - ssh -i ~/.ssh/id_ed25519 root@38.174.113.217 "chmod +x /root/kill_file_server.sh"
+    - ssh -i ~/.ssh/id_ed25519 root@38.174.113.217 "/root/kill_file_server.sh"
+
+    # 4) 上传新的 file_server 程序
+    - scp -i ~/.ssh/id_ed25519 file_server root@38.174.113.217:/root/file_server/file_server
+
+    # 5) 启动新进程
+    - |
+      ssh -i ~/.ssh/id_ed25519 root@38.174.113.217 << 'EOF'
         cd /root/file_server
         nohup ./file_server -auth :1132:1132 -http 80 -https 443 \
-             -ssl-key ../tls/cert.key -ssl-cert ../tls/cert.pem &
+               -ssl-key ../tls/cert.key -ssl-cert ../tls/cert.pem &
         exit
       EOF
 
   only:
-    - master  # 只有 master 分支的提交才会触发部署
+    - master
