@@ -26,11 +26,12 @@ deploy_job:
   before_script:
     - apk add --no-cache openssh-client
     - mkdir -p ~/.ssh
-    # CD/CI 变量不要设置为 Protect variable, 否则无法在脚本中使用
-    # 直接使用变量可能会导致换行符被转义，所以在本地不要直接复制私钥然后拷贝到变量中
+    # 设置 CD/CI 变量的时候 不要选择 Protect variable 选项, 否则无法在脚本中使用
+    # 创建 CD/CI 时, 直接把本地密钥复制到 CD/CI 变量里, 可能会导致换行符被转义，
+    # 所以在本地不要 cat 私钥_file_name 然后直接复制私, 拷贝到变量中
     # 应该使用指令 $ cat id_ed25519 | base64
-    # id_ed25519 是私钥文件名，需要根据实际情况修改, 然后将输出的 base64 字符串复制到变量 SSH_PRIVATE_KEY_BASE64 中
-    # 然后通过指令 echo "$SSH_PRIVATE_KEY_BASE64" | base64 -d > ~/.ssh/id_ed25519 还原私钥文件
+    # id_ed25519 是私钥文件名，根据情况修改, 然后将输出的 base64 字符串复制到一个新创建的变量比如 SSH_PRIVATE_KEY_BASE64 中
+    # 然后通过下面的指令 echo "$SSH_PRIVATE_KEY_BASE64" | base64 -d > ~/.ssh/id_ed25519 还原私钥文件
     - echo "$SSH_PRIVATE_KEY_BASE64" | base64 -d > ~/.ssh/id_ed25519
     - chmod 600 ~/.ssh/id_ed25519
     - ssh-keyscan -H 38.174.113.217 >> ~/.ssh/known_hosts
