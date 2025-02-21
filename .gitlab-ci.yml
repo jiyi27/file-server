@@ -37,4 +37,4 @@ deploy_job:
       EOF
 
   only:
-    - main
+    - master  # 只有 master 分支的提交才会触发部署
