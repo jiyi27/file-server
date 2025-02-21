@@ -29,7 +29,7 @@ deploy_job:
     - ssh-keyscan -H 38.174.113.217 >> ~/.ssh/known_hosts
   script:
     - echo "Deploying to server..."
-    - scp i ~/.ssh/id_ed25519 file_server root@38.174.113.217:/root/file_server/file_server
+    - scp -i ~/.ssh/id_ed25519 file_server root@38.174.113.217:/root/file_server/file_server
     - |
       ssh -i ~/.ssh/id_ed25519 root@38.174.113.217 << 'EOF'
         cd /root/file_server
