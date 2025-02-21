@@ -1,3 +1,21 @@
+stages:
+  - build
+  - deploy
+
+# 编译阶段
+build_job:
+  stage: build
+  image: golang:alpine  # 使用更小的 Alpine 镜像
+  script:
+    - echo "Building Go project..."
+    - apk add --no-cache musl-dev  # 确保 musl 依赖可用
+    # -ldflags "-s -w" -s 去掉符号表，-w 去掉调试信息，可以减小二进制文件大小
+    - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o file_server ./
+  artifacts:
+    paths:
+      - file_server  # 保存二进制文件
+    expire_in: 1 day  # 延长保留时间，避免重新编译
+
 deploy_job:
   stage: deploy
   image: alpine:latest
